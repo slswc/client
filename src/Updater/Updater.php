@@ -187,14 +187,14 @@ class Updater {
             $new_updater = Plugin::get_instance( $this->server_url, $plugin['file'], $plugin );
             $new_updater->init_hooks();
 
-            $this->updaters[ $plugin['slug'] ] = $new_updater;
+            $this->updaters[ $plugin['text_domain'] ] = $new_updater;
         }
 
         foreach ( $this->get_themes() as $theme ) {
             $new_updater = Theme::get_instance( $this->server_url, $theme['file'], $theme );
             $new_updater->init_hooks();
 
-            $this->updaters[ $theme['slug'] ] = $new_updater;
+            $this->updaters[ $theme['text_domain'] ] = $new_updater;
         }
     }
 
@@ -264,8 +264,8 @@ class Updater {
                     continue;
                 }
 
-                $plugin_data                     = Helper::format_plugin_data( $plugin_details, $plugin_file, 'plugin' );
-                $plugins[ $plugin_data['slug'] ] = wp_parse_args( $plugin_data, $this->default_remote_product() );
+                $plugin_data                             = Helper::format_plugin_data( $plugin_details, $plugin_file, 'plugin' );
+                $plugins[ $plugin_data['text_domain'] ] = wp_parse_args( $plugin_data, $this->default_remote_product() );
             }
 
             wp_cache_add(
@@ -544,11 +544,11 @@ class Updater {
             }
 
             foreach ( $this->products as $product ) {
-                if ( ! isset( $product['slug'] ) ) {
+                if ( ! isset( $product['text_domain'] ) ) {
                     continue;
                 }
 
-                $option_name = esc_attr( $product['slug'] ) . '_license_manager';
+                $option_name = esc_attr( $product['text_domain'] ) . '_license_manager';
 
                 settings_errors( $option_name );
             }
@@ -629,9 +629,9 @@ class Updater {
      */
     public function licenses_rows( $products ) {
         foreach ( $products as $product ):
-            $slug = esc_attr( $product['slug'] );
+            $text_domain = esc_attr( $product['text_domain'] );
 
-            $updater = $this->updaters[ $slug ];
+            $updater = $this->updaters[ $text_domain ];
 
             $license_info = $updater->license->get_license_details();
             $product_name = ! empty( $product['name'] ) ? $product['name'] : $product['title'];
@@ -832,8 +832,8 @@ class Updater {
      */
     public function get_remote_product( $slug, $type = 'plugin' ) {
         $request_info = array(
-            'slug' => $slug,
-            'type' => $type,
+            'text_domain' => $slug,
+            'type'        => $type,
         );
 
         $license_data = get_option( $slug . '_license_manager', null );
@@ -881,7 +881,6 @@ class Updater {
 
             if ( ! $this->ignore_status( $_license_data['license_status'] ) ) {
                 $_license_data['domain']    = untrailingslashit( str_ireplace( array( 'http://', 'https://' ), '', home_url() ) );
-                $_license_data['slug']      = $slug;
                 $slugs[]                    = $slug;
                 $licensed_products[ $slug ] = $_license_data;
             }
@@ -1145,7 +1144,7 @@ class Updater {
         }
 
         $request_args = array(
-            'slug'        => isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '',
+            'text_domain' => isset( $_POST['text_domain'] ) ? sanitize_text_field( wp_unslash( $_POST['text_domain'] ) ) : '',
             'license_key' => isset( $_POST['license_key'] ) ? sanitize_text_field( wp_unslash( $_POST['license_key'] ) ) : '',
             'domain'      => isset( $_POST['domain'] ) ? sanitize_url( wp_unslash( $_POST['domain'] ) ) : '',
             'version'     => isset( $_POST['version'] ) ? sanitize_text_field( wp_unslash( $_POST['version'] ) ) : '',
@@ -1177,7 +1176,7 @@ class Updater {
             );
         }
 
-        $software_updater = $this->updaters[ $request_args['slug'] ];
+        $software_updater = $this->updaters[ $request_args['text_domain'] ];
 
         $response = $software_updater->license->validate_license( $request_args );
 
@@ -1193,7 +1192,7 @@ class Updater {
     public static function product_background_installer() {
         global $wp_filesystem;
 
-        $slug = isset( $_REQUEST['slug'] ) ? wp_unslash( sanitize_text_field( wp_unslash( $_REQUEST['slug'] ) ) ) : '';
+        $slug = isset( $_REQUEST['text_domain'] ) ? wp_unslash( sanitize_text_field( wp_unslash( $_REQUEST['text_domain'] ) ) ) : '';
         if ( ! array_key_exists( 'nonce', $_REQUEST )
             || ! empty( $_REQUEST ) && array_key_exists( 'nonce', $_REQUEST )
             && isset( $_REQUEST ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'slswc_client_install_' . $slug ) ) {

@@ -76,7 +76,7 @@ class GenericSoftwareUpdater {
 
         $this->client = ApiClient::get_instance(
             $this->license_server_url,
-            $this->get_slug()
+            $this->get_text_domain()
         );
 
         $this->license = new LicenseDetails(
@@ -98,9 +98,7 @@ class GenericSoftwareUpdater {
     public function license_details_from_file_data( $file_data, $base_file ) {
         $license_details = array(
             'license_key' => isset( $file_data['license_key'] ) ? esc_attr( $file_data['license_key'] ) : '',
-            'slug'        => isset( $file_data['slug'] )
-                ? esc_attr( $file_data['slug'] )
-                : ( isset( $file_data['text-domain'] ) ? esc_attr( $file_data['text-domain'] ) : basename( $base_file ) ),
+            'text_domain' => isset( $file_data['text_domain'] ) ? esc_attr( $file_data['text_domain'] ) : basename( $base_file, '.php' ),
             'version'     => isset( $file_data['version'] ) ? esc_attr( $file_data['version'] ) : '0',
             'domain'      => isset( $file_data['domain'] ) ? esc_attr( $file_data['domain'] ) : home_url(),
         );
@@ -140,14 +138,14 @@ class GenericSoftwareUpdater {
     }
 
     /**
-     * Get the slug.
+     * Get the text domain.
      *
      * @return string
      * @version 1.1.0
      * @since   1.1.0 - Refactored into classes and converted into a composer package.
      */
-    public function get_slug() {
-        return $this->license_details['slug'];
+    public function get_text_domain() {
+        return $this->license_details['text_domain'];
     }
 
     /**
@@ -179,15 +177,15 @@ class GenericSoftwareUpdater {
      */
 
     /**
-     * Set the plugin slug.
+     * Set the text domain.
      *
-     * @param string $slug The plugin slug.
+     * @param string $text_domain The text domain.
      * @return void
      * @version 1.1.0
      * @since   1.1.0 - Refactored into classes and converted into a composer package.
      */
-    public function set_slug( $slug ) {
-        $this->license_details['slug'] = $slug;
+    public function set_text_domain( $text_domain ) {
+        $this->license_details['text_domain'] = $text_domain;
     }
 
     /**

@@ -80,8 +80,8 @@ class LicenseDetails {
             $this->get_default_license_details()
         );
 
-        $this->set_slug( $license_details['slug'] );
-        $this->set_option_name( $this->get_slug() . '_license_details' );
+        $text_domain = isset( $license_details['text_domain'] ) ? $license_details['text_domain'] : basename( $plugin_file, '.php' );
+        $this->set_option_name( sanitize_key( $text_domain ) . '_license_details' );
 
         $saved_license_details = get_option( $this->get_option_name(), $license_details );
 
@@ -96,7 +96,7 @@ class LicenseDetails {
 
         $this->client = new ApiClient(
             $this->license_server_url,
-            $this->get_slug(),
+            isset( $license_details['text_domain'] ) ? $license_details['text_domain'] : basename( $plugin_file, '.php' )
         );
     }
 
@@ -148,7 +148,7 @@ class LicenseDetails {
      */
     public function get_default_license_details( $args = array() ) {
         $default_options = array(
-            'slug'            => basename( $this->plugin_file ),
+            'text_domain'     => basename( $this->plugin_file, '.php' ),
             'domain'          => site_url(),
             'license_status'  => 'inactive',
             'license_key'     => '',
@@ -178,7 +178,6 @@ class LicenseDetails {
      * @since   1.1.0 - Refactored into classes and converted into a composer package.
      */
     public function set_license_details( $license_details ) {
-        $this->set_slug( $license_details['slug'] );
         $this->set_domain( $license_details['domain'] );
         $this->set_license_status( $license_details['license_status'] );
         $this->set_license_key( $license_details['license_key'] );
@@ -199,17 +198,6 @@ class LicenseDetails {
             'slswc_client_license_option_name',
             $this->option_name
         );
-    }
-
-    /**
-     * Get the software slug.
-     *
-     * @return string
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     */
-    public function get_slug() {
-        return $this->license_details['slug'];
     }
 
     /**
@@ -294,18 +282,6 @@ class LicenseDetails {
      *
      * Methods for setting object properties.
      */
-
-    /**
-     * Set the software slug.
-     *
-     * @param string $slug The slug to set.
-     * @return void
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     */
-    public function set_slug( $slug ) {
-        $this->license_details['slug'] = $slug;
-    }
 
     /**
      * Set the domain

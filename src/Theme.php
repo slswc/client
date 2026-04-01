@@ -28,13 +28,13 @@ class Theme extends GenericSoftwareUpdater implements SoftwareUpdaterInterface {
     public $license;
 
     /**
-     * The plugin slug.
+     * The theme text domain (used for local option keys and transient registry).
      *
      * @var string
      * @version 1.1.0
      * @since   1.1.0 - Refactored into classes and converted into a composer package.
      */
-    public $slug;
+    public $text_domain;
 
     /**
      * The theme version
@@ -69,7 +69,6 @@ class Theme extends GenericSoftwareUpdater implements SoftwareUpdaterInterface {
      *      array(
      *         'license_key' => 'REPLACE_WITH_YOUR_LICENSE_KEY',
      *         'domain'      => site_url(),
-     *         'slug'        => 'version'
      *      )
      *    );
      */
@@ -96,7 +95,7 @@ class Theme extends GenericSoftwareUpdater implements SoftwareUpdaterInterface {
 
         $args = Helper::get_file_details( $this->theme_file, $args, 'theme' );
 
-        $this->slug = $args['slug'];
+        $this->text_domain = isset( $args['text_domain'] ) ? $args['text_domain'] : basename( $theme_file, '.php' );
 
         parent::__construct( $license_server_url, $theme_file, $args );
 
@@ -141,7 +140,7 @@ class Theme extends GenericSoftwareUpdater implements SoftwareUpdaterInterface {
                         $theme_update_info->banners  = (array) $theme_update_info->banners;
                         $theme_update_info->url      = $theme_update_info->homepage;
                         // Theme name.
-                        $transient->response[ $this->slug ] = (array) $theme_update_info;
+                        $transient->response[ $this->text_domain ] = (array) $theme_update_info;
                     }
                 }
             }

@@ -37,6 +37,22 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
     public $plugin_dir_file;
 
     /**
+     * DRM configuration array (if DRM is enabled).
+     *
+     * @var array|null
+     * @since 1.2.0
+     */
+    private $drm_config = null;
+
+    /**
+     * DRM enforcer instance.
+     *
+     * @var DRM|null
+     * @since 1.2.0
+     */
+    public $drm = null;
+
+    /**
      * Get an instance of this class..
      *
      * @since   1.1.0 - Refactored into classes and converted into a composer package.
@@ -69,7 +85,6 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
      *     'https://example.com',
      *      __FILE__,
      *      array(
-     *        'slug'        => 'my-plugin',
      *        'version'     => '1.1.0',
      *        'license_key' => 'LICENSE_KEY',
      *        'domain'      => 'example.com',
@@ -83,6 +98,11 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
 
         $this->plugin_dir_file    = $this->plugin_dir_file();
         $this->license_server_url = $license_server_url;
+
+        // Store DRM config if provided.
+        if ( isset( $args['drm'] ) && is_array( $args['drm'] ) ) {
+            $this->drm_config = $args['drm'];
+        }
 
         parent::__construct( $license_server_url, $plugin_file, $args );
     }
@@ -103,6 +123,22 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
         add_filter( 'transient_update_plugins', array( $this, 'change_update_information' ) );
         add_action( 'in_plugin_update_message-' . $this->plugin_dir_file, array( $this, 'need_license_message' ), 10, 2 );
         add_filter( 'http_request_host_is_external', array( $this, 'fix_update_host' ), 10, 2 );
+
+        // Initialize DRM if configured.
+        if ( ! empty( $this->drm_config ) ) {
+            $this->drm = new DRM( $this->drm_config, $this );
+            $this->drm->run();
+        }
+    }
+
+    /**
+     * Get the DRM enforcer instance.
+     *
+     * @since  1.2.0
+     * @return DRM|null
+     */
+    public function get_drm() {
+        return $this->drm;
     }
 
     /**
@@ -216,7 +252,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
     public function add_plugin_info( $result, $action = null, $args = null ) {
         // Is this about our plugin?
         if ( isset( $args->slug ) ) {
-            if ( $args->slug !== $this->get_slug() ) {
+            if ( $args->slug !== $this->get_text_domain() ) {
                 return $result;
             }
         } else {
@@ -260,7 +296,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
                 add_query_arg(
                     array(
                         'slswc_check_for_update' => 1,
-                        'slswc_slug'             => $this->get_slug(),
+                        'slswc_slug'             => $this->get_text_domain(),
                     ),
                     self_admin_url( 'plugins.php' )
                 ),
@@ -268,7 +304,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
             );
 
             $update_link_text = apply_filters(
-                'slswc_update_link_text_' . $this->get_slug(),
+                'slswc_update_link_text_' . $this->get_text_domain(),
                 __( 'Check for updates', 'slswcclient' )
             );
 

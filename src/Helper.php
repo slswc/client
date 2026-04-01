@@ -123,7 +123,6 @@ class Helper {
             // SLSWC Headers.
             'slswc'             => ! empty( $data['SLSWC'] ) ? $data['SLSWC'] : '',
             'updated'           => ! empty( $data['SLSWC Updated'] ) ? $data['SLSWC Updated'] : '',
-            'slug'              => ! empty( $data['SLSWC Slug'] ) ? $data['SLSWC Slug'] : $data['TextDomain'],
             'compatible_to'     => ! empty( $data['SLSWC Compatible To'] ) ? $data['SLSWC Compatible To'] : '',
             'documentation_url' => ! empty( $data['SLSWC Documentation URL'] ) ? $data['SLSWC Documentation URL'] : '',
             'type'              => 'plugin',
@@ -186,9 +185,6 @@ class Helper {
                 ? $theme->get( 'RequiresWP' ) : '',
             // SLSWC Headers.
             'slswc'             => ! empty( $theme->get( 'SLSWC' ) ) ? $theme->get( 'SLSWC' ) : '',
-            'slug'              => ! empty( $theme->get( 'SLSWCSlug' ) )
-                ? $theme->get( 'SLSWCSlug' )
-                : $theme->get( 'TextDomain' ),
             'updated'           => ! empty( $theme->get( 'SLSWCUpdated' ) ) ? $theme->get( 'SLSWCUpdated' ) : '',
             'compatible_to'     => ! empty( $theme->get( 'SLSWCCompatibleTo' ) )
                 ? $theme->get( 'SLSWCCompatibleTo' )
@@ -234,7 +230,7 @@ class Helper {
     public static function product_background_installer( $slug = '', $package = '' ) { // phpcs:ignore
         global $wp_filesystem;
 
-        $slug = isset( $_REQUEST['slug'] ) ? wp_unslash( sanitize_text_field( wp_unslash( $_REQUEST['slug'] ) ) ) : '';
+        $slug = isset( $_REQUEST['text_domain'] ) ? wp_unslash( sanitize_text_field( wp_unslash( $_REQUEST['text_domain'] ) ) ) : '';
         if ( ! array_key_exists( 'nonce', $_REQUEST )
             || ! empty( $_REQUEST ) && array_key_exists( 'nonce', $_REQUEST )
             && isset( $_REQUEST ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'slswc_client_install_' . $slug ) ) {
@@ -531,10 +527,6 @@ class Helper {
 
 		if ( ! in_array( 'Author', $headers, true ) ) {
 			$headers[] = 'Author';
-		}
-
-		if ( ! in_array( 'SLSWC Slug', $headers, true ) ) {
-			$headers[] = 'SLSWC Slug';
 		}
 
 		if ( ! in_array( 'Requires at least', $headers, true ) ) {

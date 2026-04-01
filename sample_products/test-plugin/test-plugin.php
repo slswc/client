@@ -29,6 +29,7 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+use Digitalduz\Slswc\Client\Helper;
 use Digitalduz\SLSWC\Client\Plugin;
 
 /**
@@ -49,3 +50,34 @@ function your_prefix_slswc_client() {
     return Plugin::get_instance( 'http://example.com/', __FILE__, $license_details );
 }
 add_action( 'plugins_loaded', 'slswc_client', 11 );
+
+function activate_plugin_license() {
+    $plugin = your_prefix_slswc_client();
+
+    // Example of how to update the plugin. Run this on a hook.
+    if ( $plugin->license->get_license_status() !== 'active' ) {
+        $plugin->license->validate_license();
+    }
+}
+
+add_action( 'init', 'activate_plugin_license' );
+
+/**
+ * Extra plugin headers
+ */
+add_filter( 'extra_plugin_headers', 'slswc_client_extra_headers' );
+add_filter( 'extra_theme_headers', 'slswc_client_extra_headers' );
+
+if ( ! function_exists( 'slswc_client_extra_headers' ) ) {
+    /**
+     * Extra theme and plugin headers.
+     *
+     * @param array $headers The current WordPress plugin and theme headers.
+     * @return array $headers The modified headers.
+     * @version 1.1.0
+     * @since   1.1.0
+     */
+    function slswc_client_extra_headers( $headers ) {
+        return Helper::extra_headers( $headers );
+    }
+}

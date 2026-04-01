@@ -50,26 +50,26 @@ class ApiClient {
     public $license_server_url;
 
     /**
-     * The slug of the product using the client
+     * The text domain of the product using the client (used for local option keys and hooks only).
      *
      * @var string
      * @version 1.1.0
      * @since   1.1.0 - Refactored into classes and converted into a composer package.
      */
-    public $slug;
+    public $text_domain;
 
     /**
      * Single instance of the plugin.
      *
      * @param string $license_server_url The license server URL.
-     * @param string $slug The product slug.
+     * @param string $text_domain        The product text domain.
      * @return ApiClient
      * @version 1.0.0
      * @since   1.0.0
      */
-    public static function get_instance( $license_server_url, $slug ) {
+    public static function get_instance( $license_server_url, $text_domain ) {
         if ( is_null( self::$instance ) ) {
-            self::$instance = new self( $license_server_url, $slug );
+            self::$instance = new self( $license_server_url, $text_domain );
         }
 
         return self::$instance;
@@ -79,25 +79,25 @@ class ApiClient {
      * Construct a new instance of this class
      *
      * @param string $license_server_url The license server url.
-     * @param string $slug               The software slug.
+     * @param string $text_domain        The software text domain.
      * @version 1.1.0
      * @since   1.1.0 - Refactored into classes and converted into a composer package.
      */
-    public function __construct( $license_server_url, $slug ) {
+    public function __construct( $license_server_url, $text_domain ) {
         $this->license_server_url = $license_server_url;
-        $this->slug               = $slug;
+        $this->text_domain        = $text_domain;
     }
 
     /**
-     * Set the software slug.
+     * Set the software text domain.
      *
-     * @param string $slug The product slug.
+     * @param string $text_domain The product text domain.
      * @return void
      * @version 1.1.0
      * @since   1.1.0 - Refactored into classes and converted into a composer package.
      */
-    public function set_slug( $slug ) {
-        $this->slug = $slug;
+    public function set_text_domain( $text_domain ) {
+        $this->text_domain = $text_domain;
     }
 
     /**
@@ -126,8 +126,8 @@ class ApiClient {
         Helper::log( 'Connecting...' );
 
         if ( $connection && $connection->connected && 'ok' === $connection->status ) {
-            update_option( 'slswc_api_connected_' . esc_attr( $this->slug ), apply_filters( 'slswc_api_connected_' . esc_attr( $this->slug ), 'yes' ) );
-            update_option( 'slswc_api_auth_user_' . esc_attr( $this->slug ), apply_filters( 'slswc_api_auth_user_' . esc_attr( $this->slug ), $connection->auth_user ) );
+            update_option( 'slswc_api_connected_' . esc_attr( $this->text_domain ), apply_filters( 'slswc_api_connected_' . esc_attr( $this->text_domain ), 'yes' ) );
+            update_option( 'slswc_api_auth_user_' . esc_attr( $this->text_domain ), apply_filters( 'slswc_api_auth_user_' . esc_attr( $this->text_domain ), $connection->auth_user ) );
 
             return true;
         }
@@ -145,9 +145,9 @@ class ApiClient {
     public function get_api_keys() {
         return array_filter(
             array(
-                'username'        => get_option( 'slswc_api_username_' . esc_attr( $this->slug ), '' ),
-                'consumer_key'    => get_option( 'slswc_consumer_key_' . esc_attr( $this->slug ), '' ),
-                'consumer_secret' => get_option( 'slswc_consumer_secret_' . esc_attr( $this->slug ), '' ),
+                'username'        => get_option( 'slswc_api_username_' . esc_attr( $this->text_domain ), '' ),
+                'consumer_key'    => get_option( 'slswc_consumer_key_' . esc_attr( $this->text_domain ), '' ),
+                'consumer_secret' => get_option( 'slswc_consumer_secret_' . esc_attr( $this->text_domain ), '' ),
             )
         );
     }
@@ -169,7 +169,7 @@ class ApiClient {
             'consumer_secret' => $consumer_secret,
         );
         return update_option(
-            'slswc_api_keys_' . esc_attr( $this->slug ),
+            'slswc_api_keys_' . esc_attr( $this->text_domain ),
             $keys
         );
     }
@@ -188,10 +188,8 @@ class ApiClient {
     public function request( $action = 'check_update', $request_info = array() ) {
         $domain = $this->license_server_url;
 
-        $slug = isset( $request_info['slug'] ) ? $request_info['slug'] : '';
-
         // Allow filtering the request info for plugins.
-        $request_info = apply_filters( 'slswc_request_info_' . $slug, $request_info );
+        $request_info = apply_filters( 'slswc_request_info_' . $this->text_domain, $request_info );
 
         // Build the server url api end point fix url build to support the WordPress API.
         $server_request_url = esc_url_raw( $domain . 'wp-json/slswc/v1/' . $action . '?' . http_build_query( $request_info ) );
@@ -200,7 +198,7 @@ class ApiClient {
         $request_options = array( 'timeout' => 30 );
 
         // Allow filtering the request options.
-        $request_options = apply_filters( 'slswc_request_options_' . $slug, $request_options );
+        $request_options = apply_filters( 'slswc_request_options_' . $this->text_domain, $request_options );
 
         // Query the license server.
         $endpoint_get_actions = apply_filters( 'slswc_client_get_actions', array( 'product', 'products' ) );

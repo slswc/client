@@ -8,7 +8,7 @@
  * @package SLSWC_CLient
  */
 
-namespace Digitalduz\Slswc\Client;
+namespace SLSWC\Client;
 
 /**
  * License details class.

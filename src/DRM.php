@@ -11,7 +11,7 @@
  * @link    https://licenseserver.io/
  */
 
-namespace Digitalduz\Slswc\Client;
+namespace SLSWC\Client;
 
 /**
  * Class DRM

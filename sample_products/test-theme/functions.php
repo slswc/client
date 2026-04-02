@@ -10,7 +10,7 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-use Digitalduz\Slswc\Client\Theme;
+use SLSWC\Client\Theme;
 
 /**
  * Initialize License CLient

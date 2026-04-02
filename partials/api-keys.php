@@ -6,7 +6,7 @@
  * @package SLSWC_Updater/Partials
  */
 
-use Digitalduz\Slswc\Client\Helper;
+use SLSWC\Client\Helper;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;

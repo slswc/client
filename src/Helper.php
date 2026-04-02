@@ -8,7 +8,7 @@
  * @link        https://licenseserver.io/
  */
 
-namespace Digitalduz\Slswc\Client;
+namespace SLSWC\Client;
 
 use Exception;
 use WC_DateTime;

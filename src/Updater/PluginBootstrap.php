@@ -8,7 +8,7 @@
  * @link        https://licenseserver.io/
  */
 
-namespace Digitalduz\Slswc\Client\Updater;
+namespace SLSWC\Client\Updater;
 
 /**
  * Plugin bootstrap class.

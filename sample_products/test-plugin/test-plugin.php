@@ -29,8 +29,8 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-use Digitalduz\Slswc\Client\Helper;
-use Digitalduz\SLSWC\Client\Plugin;
+use SLSWC\Client\Helper;
+use SLSWC\Client\Plugin;
 
 /**
  * Initialize license server client.

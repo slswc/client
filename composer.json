@@ -1,5 +1,5 @@
 {
-    "name": "digitalduz/slswc-client",
+    "name": "slswc/client",
     "description": "Software License Server for WooCommerce",
     "license": "GPL-2.0-or-later",
     "version": "1.1.1",
@@ -17,8 +17,8 @@
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "Digitalduz\\Slswc\\Client\\": "src/",
-            "Digitalduz\\Slswc\\Client\\Updater\\": "src/Updater/"
+            "SLSWC\\Client\\": "src/",
+            "SLSWC\\Client\\Updater\\": "src/Updater/"
         }
     },
     "require-dev": {

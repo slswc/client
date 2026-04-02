@@ -8,12 +8,12 @@
  * @link        https://licenseserver.io/
  */
 
-namespace Digitalduz\Slswc\Client\Updater;
+namespace SLSWC\Client\Updater;
 
-use Digitalduz\Slswc\Client\ApiClient;
-use Digitalduz\Slswc\Client\Plugin;
-use Digitalduz\Slswc\Client\Helper;
-use Digitalduz\Slswc\Client\Theme;
+use SLSWC\Client\ApiClient;
+use SLSWC\Client\Plugin;
+use SLSWC\Client\Helper;
+use SLSWC\Client\Theme;
 
 use Exception;
 

@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-use Digitalduz\Slswc\Client\Helper;
+use SLSWC\Client\Helper;
 
 ?>
 <h2 class="screen-reader-text">

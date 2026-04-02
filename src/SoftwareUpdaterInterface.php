@@ -7,7 +7,7 @@
  * @package Slswc_Client
  */
 
-namespace Digitalduz\Slswc\Client;
+namespace SLSWC\Client;
 
 /**
  * Software Updater Interface

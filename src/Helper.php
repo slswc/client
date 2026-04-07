@@ -222,12 +222,12 @@ class Helper {
      * Install a product.
      *
      * @param string $slug    Product slug.
-     * @param string $package The product download url.
+     * @param string $download_url The product download url.
      *
      * @since   1.0.0
      * @version 1.0.0
      */
-    public static function product_background_installer( $slug = '', $package = '' ) { // phpcs:ignore
+    public static function product_background_installer( $slug = '', $download_url = '' ) {
         global $wp_filesystem;
 
         $slug = isset( $_REQUEST['text_domain'] ) ? wp_unslash( sanitize_text_field( wp_unslash( $_REQUEST['text_domain'] ) ) ) : '';
@@ -360,7 +360,7 @@ class Helper {
         $host      = ! empty( $url_parts['host'] ) ? $url_parts['host'] : false;
 
         if ( empty( $url ) || ! $host ) {
-            return apply_filters( 'slswc_client_is_dev', false );
+            return apply_filters( 'slswc_client_is_dev', true );
         }
 
         $is_ip_local = self::is_ip_local( $host );

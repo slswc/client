@@ -34,7 +34,7 @@
  * And the optional WordPress header:
  * Requires at least:      (optional) The minimum WordPress version required by the plugin or theme.
  *
- * @version     1.0.2
+ * @version     1.0.0
  * @since       1.0.0
  * @package     SLSWC_Client
  * @link        https://licenseserver.io/
@@ -454,7 +454,7 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
             echo '<div class="error notice is-dismissible"><p>';
             // phpcs:disable
             // translators: 1 - Product name. 2 - Link opening html. 3 - link closing html.
-            echo sprintf( __( 'The %1$s license key has not been activated, so you will not be able to get automatic updates or support! %2$sClick here%3$s to activate your support and updates license key.', 'slswcclient' ), esc_attr( $this->name ), '<a href="' . esc_url_raw( $this->license_manager_url ) . '">', '</a>' );
+            echo sprintf( __( 'The %1$s license key has not been activated, so you will not be able to get automatic updates or support! %2$sClick here%3$s to activate your support and updates license key.', 'slswc-client' ), esc_attr( $this->name ), '<a href="' . esc_url_raw( $this->license_manager_url ) . '">', '</a>' );
             echo '</p></div>';
             // phpcs:enable
         }
@@ -470,7 +470,7 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
 
             echo '<div class="error notice is-dismissible"><p>';
             // translators: 1 - Product name.
-            echo esc_attr( sprintf( __( '%s has detected you are running on your localhost. The license activation system has been disabled. ', 'slswcclient' ), esc_attr( $this->name ) ) ) . '</p></div>';
+            echo esc_attr( sprintf( __( '%s has detected you are running on your localhost. The license activation system has been disabled. ', 'slswc-client' ), esc_attr( $this->name ) ) ) . '</p></div>';
         }
 
         /**
@@ -648,7 +648,7 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
                     'slswc_check_for_update'
                 );
 
-                $update_link_text = apply_filters( 'slswc_update_link_text_' . $this->slug, __( 'Check for updates', 'slswcclient' ) );
+                $update_link_text = apply_filters( 'slswc_update_link_text_' . $this->slug, __( 'Check for updates', 'slswc-client' ) );
 
                 if ( ! empty( $update_link_text ) ) {
                     $links[] = sprintf( '<a href="%s">%s</a>', esc_attr( $update_link_url ), $update_link_text );
@@ -717,14 +717,14 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
 
                 switch ( $check_result ) {
                     case 'no':
-                        $admin_notice = __( 'This plugin is up to date. ', 'slswcclient' );
+                        $admin_notice = __( 'This plugin is up to date. ', 'slswc-client' );
                         break;
                     case 'yes':
                         // translators: 1 - Plugin/Theme name.
-                        $admin_notice = sprintf( __( 'An update is available for %s.', 'slswcclient' ), $this->name );
+                        $admin_notice = sprintf( __( 'An update is available for %s.', 'slswc-client' ), $this->name );
                         break;
                     default:
-                        $admin_notice = __( 'Unknown update status.', 'slswcclient' );
+                        $admin_notice = __( 'Unknown update status.', 'slswc-client' );
                         break;
                 }
 
@@ -762,11 +762,11 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
             ?>
         <div class='wrap'>
             <?php // translators: 1 - Plugin/Theme name. ?>
-        <h2><?php echo esc_html( sprintf( __( '%s License Manager', 'slswcclient' ), esc_attr( $this->name ) ) ); ?></h2>
+        <h2><?php echo esc_html( sprintf( __( '%s License Manager', 'slswc-client' ), esc_attr( $this->name ) ) ); ?></h2>
         <form action='options.php' method='post'>
             <div class="main">
                 <div class="notice update">
-                <?php echo esc_html( sprintf( __( 'Please Note: If your license is active on another website you will need to deactivate this before being able to activate it on this site. IMPORTANT: If this is a development or a staging site dont activate your license.  Your license should ONLY be activated on the LIVE WEBSITE you use Pro on.', 'slswcclient' ), esc_attr( $this->name ) ) ); ?>
+                <?php echo esc_html( sprintf( __( 'Please Note: If your license is active on another website you will need to deactivate this before being able to activate it on this site. IMPORTANT: If this is a development or a staging site dont activate your license.  Your license should ONLY be activated on the LIVE WEBSITE you use Pro on.', 'slswc-client' ), esc_attr( $this->name ) ) ); ?>
                 </div>
 
                 <?php settings_errors( $this->option_name ); ?>
@@ -774,7 +774,7 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
                 <?php
                     settings_fields( $this->option_name );
                     do_settings_sections( $this->option_name );
-                    submit_button( __( 'Save Changes', 'slswcclient' ) );
+                    submit_button( __( 'Save Changes', 'slswc-client' ) );
                 ?>
                 </div>
             </form>
@@ -794,7 +794,7 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
             ?>
             <p>
                 <?php
-                esc_html( __( 'Please enter your license key to activate automatic updates and verify your support.', 'slswcclient' ) );
+                esc_html( __( 'Please enter your license key to activate automatic updates and verify your support.', 'slswc-client' ) );
                 ?>
                 </p>
                 <?php
@@ -860,8 +860,8 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
          * Activate a license
          *
          * @return void
-         * @version 1.0.2
-         * @since   1.0.2
+         * @version 1.0.0
+         * @since   1.0.0
          */
         public function activate_license() {
 
@@ -870,7 +870,7 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
             if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'activate-license-' . esc_attr( $slug ) ) ) {
                 wp_send_json_error(
                     array(
-                        'message' => __( 'Security verification failed. Please reload the page and try again.', 'slswcclient' ),
+                        'message' => __( 'Security verification failed. Please reload the page and try again.', 'slswc-client' ),
                     )
                 );
             }
@@ -919,7 +919,7 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
          * Validate the license key information sent from the form.
          *
          * @since   1.0.0
-         * @version 1.0.2
+         * @version 1.0.0
          * @param array $input the input passed from the request.
          */
         public function validate_license( $input ) {
@@ -968,7 +968,7 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
             }
 
             if ( is_null( $response ) ) {
-                $message = __( 'Error: Your license might be invalid or there was an unknown error on the license server. Please try again and contact support if this issue persists.', 'slswcclient' );
+                $message = __( 'Error: Your license might be invalid or there was an unknown error on the license server. Please try again and contact support if this issue persists.', 'slswc-client' );
                 SLSWC_Client_Manager::add_message(
                     'error',
                     $message,
@@ -1004,21 +1004,21 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
             $messages = $this->license_status_types();
 
             if ( ( 'valid' === $domain_status || 'active' === $domain_status ) && 'activate' === $action ) {
-                $message = __( 'License activated.', 'slswcclient' );
+                $message = __( 'License activated.', 'slswc-client' );
             } elseif ( 'active' !== $domain_status && 'activate' === $action ) {
                 $type    = 'error';
                 $message = sprintf(
                     // translators: %s is the error message.
-                    __( 'Failed to activate license. %s', 'slswcclient' ),
+                    __( 'Failed to activate license. %s', 'slswc-client' ),
                     $messages[ $domain_status ]
                 );
             } elseif ( 'deactivate' === $action && 'deactivated' === $domain_status ) {
-                $message = __( 'License Deactivated', 'slswcclient' );
+                $message = __( 'License Deactivated', 'slswc-client' );
             } elseif ( 'deactivate' === $action && 'deactivate' !== $domain_status ) {
                 $type    = 'error';
                 $message = sprintf(
                     // translators: %s - The message describing the license status.
-                    __( 'Unable to deactivate license. Please deactivate on the store. %s', 'slswcclient' ),
+                    __( 'Unable to deactivate license. Please deactivate on the store. %s', 'slswc-client' ),
                     $messages[ $domain_status ]
                 );
             } else {
@@ -1074,14 +1074,14 @@ if ( ! class_exists( 'SLSWC_Client' ) ):
             return apply_filters(
                 'slswc_license_status_types',
                 array(
-                    'valid'           => __( 'Valid', 'slswcclient' ),
-                    'deactivated'     => __( 'Deactivated', 'slswcclient' ),
-                    'max_activations' => __( 'Max Activations reached', 'slswcclient' ),
-                    'invalid'         => __( 'Invalid', 'slswcclient' ),
-                    'inactive'        => __( 'Inactive', 'slswcclient' ),
-                    'active'          => __( 'Active', 'slswcclient' ),
-                    'expiring'        => __( 'Expiring', 'slswcclient' ),
-                    'expired'         => __( 'Expired', 'slswcclient' ),
+                    'valid'           => __( 'Valid', 'slswc-client' ),
+                    'deactivated'     => __( 'Deactivated', 'slswc-client' ),
+                    'max_activations' => __( 'Max Activations reached', 'slswc-client' ),
+                    'invalid'         => __( 'Invalid', 'slswc-client' ),
+                    'inactive'        => __( 'Inactive', 'slswc-client' ),
+                    'active'          => __( 'Active', 'slswc-client' ),
+                    'expiring'        => __( 'Expiring', 'slswc-client' ),
+                    'expired'         => __( 'Expired', 'slswc-client' ),
                 )
             );
         } // software_types
@@ -1302,8 +1302,8 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          * Status update messages
          *
          * @var array
-         * @version 1.0.1
-         * @since   1.0.1
+         * @version 1.0.0
+         * @since   1.0.0
          */
         public static $messages = array();
 
@@ -1332,7 +1332,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
             self::$text_domain        = $text_domain;
 
             if ( null === self::$instance ) {
-                self::$instance = new self( self::$license_server_url, self::$slug, 'slswcclient' );
+                self::$instance = new self( self::$license_server_url, self::$slug, 'slswc-client' );
             }
 
             return self::$instance;
@@ -1370,10 +1370,10 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
             self::$localization = array(
                 'ajax_url'        => esc_url( admin_url( 'admin-ajax.php' ) ),
                 'loader_url'      => esc_url( admin_url( 'images/loading.gif' ) ),
-                'text_activate'   => esc_attr( __( 'Activate', 'slswcclient' ) ),
-                'text_deactivate' => esc_attr( __( 'Deactivate', 'slswcclient' ) ),
-                'text_done'       => esc_attr( __( 'Done', 'slswcclient' ) ),
-                'text_processing' => esc_attr( __( 'Processing', 'slswcclient' ) ),
+                'text_activate'   => esc_attr( __( 'Activate', 'slswc-client' ) ),
+                'text_deactivate' => esc_attr( __( 'Deactivate', 'slswc-client' ) ),
+                'text_done'       => esc_attr( __( 'Done', 'slswc-client' ) ),
+                'text_processing' => esc_attr( __( 'Processing', 'slswc-client' ) ),
             );
         }
 
@@ -1395,7 +1395,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          * Check if the current page is a product list page.
          *
          * @return  boolean
-         * @version 1.0.3
+         * @version 1.0.0
          * @since   1.0.0
          */
         public static function is_products_page() {
@@ -1417,8 +1417,8 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          * Check if we are on the licenses tab on the license manager page.
          *
          * @return boolean
-         * @version 1.0.3
-         * @since   1.0.3
+         * @version 1.0.0
+         * @since   1.0.0
          */
         public static function is_licenses_tab() {
             $tab  = self::get_tab();
@@ -1431,8 +1431,8 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          * Add script to admin footer.
          *
          * @return  void
-         * @version 1.0.3
-         * @since   1.0.3 - Rewrote the script
+         * @version 1.0.0
+         * @since   1.0.0
          */
         public static function admin_footer_products_script() {
             ?>
@@ -1508,8 +1508,8 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          * Add footer script to manage licenses.
          *
          * @return void
-         * @version 1.0.3
-         * @since   1.0.3
+         * @version 1.0.0
+         * @since   1.0.0
          */
         public function admin_footer_licenses_script() {
             ?>
@@ -1641,8 +1641,8 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          */
         public function add_admin_menu() {
             $page = add_options_page(
-                __( 'License Manager', 'slswcclient' ),
-                __( 'License Manager', 'slswcclient' ),
+                __( 'License Manager', 'slswc-client' ),
+                __( 'License Manager', 'slswc-client' ),
                 'manage_options',
                 'slswc_license_manager',
                 array( $this, 'show_installed_products' )
@@ -1671,7 +1671,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
             </style>
             <div class="wrap plugin-install-tab">               
                 <div id="slswc-product-install-message" class="notice inline hidden"><p></p></div>
-                <h1><?php esc_html_e( 'Licensed Plugins and Themes', 'slswcclient' ); ?></h1>
+                <h1><?php esc_html_e( 'Licensed Plugins and Themes', 'slswc-client' ); ?></h1>
                 <?php
 
                 if ( isset( $_POST['save_api_keys_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['save_api_keys_nonce'] ) ), 'save_api_keys' ) ) {
@@ -1685,7 +1685,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
 
                     if ( $save_username && $save_consumer_key && $save_consumer_secret ) {
                         ?>
-                        <div class="updated"><p><?php esc_html_e( 'API Settings saved', 'slswcclient' ); ?></p></div>
+                        <div class="updated"><p><?php esc_html_e( 'API Settings saved', 'slswc-client' ); ?></p></div>
                         <?php
                     }
                 }
@@ -1696,7 +1696,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                         ?>
                         <div class="updated"><p>
                         <?php
-                        esc_html_e( 'API Connected successfully.', 'slswcclient' );
+                        esc_html_e( 'API Connected successfully.', 'slswc-client' );
                         ?>
                         </p></div>
                         <?php
@@ -1704,7 +1704,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                         ?>
                         <div class="error notice is-dismissible"><p>
                         <?php
-                        esc_html_e( 'API connection failed. Please check your keys and try again.', 'slswcclient' );
+                        esc_html_e( 'API connection failed. Please check your keys and try again.', 'slswc-client' );
                         ?>
                         </p></div>
                         <?php
@@ -1719,13 +1719,13 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                     if ( $deleted_username && $deleted_consumer_key && $deleted_consumer_secret ) {
                         ?>
                         <p class="updated">
-                        <?php esc_html_e( 'API Keys successfully.', 'slswcclient' ); ?>
+                        <?php esc_html_e( 'API Keys successfully.', 'slswc-client' ); ?>
                         </p>
                         <?php
                     } else {
                         ?>
                         <p class="updated">
-                        <?php esc_html_e( 'API Keys not reset.', 'slswcclient' ); ?>
+                        <?php esc_html_e( 'API Keys not reset.', 'slswc-client' ); ?>
                         </p>
                         <?php
                     }
@@ -1747,25 +1747,25 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                         <li>
                             <a href="<?php echo esc_url( $license_admin_url ); ?>&tab=licenses"
                                 class="<?php echo esc_attr( ( 'licenses' === $tab || empty( $tab ) ) ? 'current' : '' ); ?>">
-                                <?php esc_attr_e( 'Licenses', 'slswcclient' ); ?>
+                                <?php esc_attr_e( 'Licenses', 'slswc-client' ); ?>
                             </a>
                         </li>
                         <li>
                             <a href="<?php echo esc_url( $license_admin_url ); ?>&tab=plugins"
                                 class="<?php echo ( 'plugins' === $tab ) ? 'current' : ''; ?>">
-                                <?php esc_attr_e( 'Plugins', 'slswcclient' ); ?>
+                                <?php esc_attr_e( 'Plugins', 'slswc-client' ); ?>
                             </a>
                         </li>
                         <li>
                             <a href="<?php echo esc_url( $license_admin_url ); ?>&tab=themes"
                                 class="<?php echo ( 'themes' === $tab ) ? 'current' : ''; ?>">
-                                <?php esc_attr_e( 'Themes', 'slswcclient' ); ?>
+                                <?php esc_attr_e( 'Themes', 'slswc-client' ); ?>
                             </a>
                         </li>
                         <li>
                             <a href="<?php echo esc_url( $license_admin_url ); ?>&tab=api"
                                 class="<?php echo ( 'api' === $tab ) ? 'current' : ''; ?>">
-                                <?php esc_attr_e( 'API', 'slswcclient' ); ?>
+                                <?php esc_attr_e( 'API', 'slswc-client' ); ?>
                             </a>
                         </li>
                     </ul>
@@ -1868,7 +1868,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
 
             self::display_messages();
             ?>
-            <h2 class="screen-reader-text"><?php esc_html_e( 'Licenses', 'slswcclient' ); ?></h2>
+            <h2 class="screen-reader-text"><?php esc_html_e( 'Licenses', 'slswc-client' ); ?></h2>
             <div id="license-action-response-message"></div>
             <form name="licenses-form" action="" method="post">
                 <?php wp_nonce_field( 'save_licenses', 'save_licenses_nonce' ); ?>
@@ -1942,7 +1942,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                         </div>
                         <div class="column-license-key">
                             <label for="<?php echo esc_attr( $slug ); ?>_license_key">
-                                <?php esc_html_e( 'License Key', 'slswcclient' ); ?>
+                                <?php esc_html_e( 'License Key', 'slswc-client' ); ?>
                             </label>                            
                             <input type="text"
                                 name="licenses[<?php echo esc_attr( $slug ); ?>][license_key]"
@@ -1963,7 +1963,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                             </label>
                             
                             <label for="<?php echo esc_attr( $slug ); ?>_environment" id="<?php echo esc_attr( $slug ); ?>_environment-label" class="hidden">
-                                <?php esc_html_e( 'Environment', 'slswcclient' ); ?>
+                                <?php esc_html_e( 'Environment', 'slswc-client' ); ?>
                             </label>
 
                             <select id="<?php echo esc_attr( $slug ); ?>_environment"
@@ -1971,7 +1971,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                                 class="input-select <?php echo esc_attr( $slug ); ?>_environment hidden"
                                 data-slug="<?php echo esc_attr( $slug ); ?>"
                             >
-                                <option value="" <?php selected( $license_environment, '' ); ?>><?php esc_html_e( 'Select environment', 'slswcclient' ); ?></option>
+                                <option value="" <?php selected( $license_environment, '' ); ?>><?php esc_html_e( 'Select environment', 'slswc-client' ); ?></option>
                                 <option value="staging" <?php selected( $license_environment, 'staging' ); ?>><?php esc_html_e( 'Staging' ); ?></option>
                                 <option value="live" <?php selected( $license_environment, 'live' ); ?>><?php esc_html_e( 'Live' ); ?></option>
                             </select>
@@ -1987,7 +1987,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                     <div class="plugin-card-bottom slswc-plugin-card-bottom">                   
                         <div class="column-updated">
                             <?php if ( '' !== $license_expires ): ?>
-                                <?php esc_html_e( 'License expires in ', 'slswcclient' ); ?>
+                                <?php esc_html_e( 'License expires in ', 'slswc-client' ); ?>
                                 <?php echo esc_html( human_time_diff( strtotime( $license_expires ) ) ); ?>                             
                                 <?php echo wp_kses_post( wc_help_tip( $license_expires ) ); ?>
                                 <input
@@ -2010,7 +2010,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                                 data-nonce="<?php echo esc_attr( wp_create_nonce( 'activate-license-' . esc_attr( $slug ) ) ); ?>"
                                 data-environment="<?php echo esc_attr( $license_environment ); ?>"
                                 class='button button-primary license-action'>                           
-                                <?php echo esc_attr( $is_active ? __( 'Deactivate', 'slswcclient' ) : __( 'Activate', 'slswcclient' ) ); ?>
+                                <?php echo esc_attr( $is_active ? __( 'Deactivate', 'slswc-client' ) : __( 'Activate', 'slswc-client' ) ); ?>
                             </a>
                         </div>
                     </div>
@@ -2053,7 +2053,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
 
             ?>
             <?php if ( ! empty( $products ) && count( $products ) > 0 ): ?>
-                <h2 class="screen-reader-text"><?php esc_html_e( 'Plugins List', 'slswcclient' ); ?></h2>
+                <h2 class="screen-reader-text"><?php esc_html_e( 'Plugins List', 'slswc-client' ); ?></h2>
                 <div id="the-list">
                     <?php foreach ( $products as $product ): ?>
                         <?php
@@ -2068,7 +2068,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
 
                         $name_version = esc_attr( $product['name'] ) . ' ' . esc_attr( $product['version'] );
                         $action_class = $installed ? 'update' : 'install';
-                        $action_label = $installed ? __( 'Update Now', 'slswcclient' ) : __( 'Install Now', 'slswcclient' );
+                        $action_label = $installed ? __( 'Update Now', 'slswc-client' ) : __( 'Install Now', 'slswc-client' );
 
                         do_action( 'slswc_before_products_list', $products );
 
@@ -2093,14 +2093,14 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                                 <ul class="plugin-action-buttons">
                                     <li>
                                         <?php if ( empty( $product['download_url'] ) ): ?>
-                                            <?php esc_attr_e( 'Manual Download Only.', 'slswcclient' ); ?>
+                                            <?php esc_attr_e( 'Manual Download Only.', 'slswc-client' ); ?>
                                         <?php else: ?>
                                         <a class="slswc-<?php echo esc_attr( $action_class ); ?>-now <?php echo esc_attr( $action_class ); ?>-now button aria-button-if-js"
                                             data-download_url="<?php echo esc_url_raw( $product['download_url'] ); ?>"
                                             data-slug="<?php echo esc_attr( $product['slug'] ); ?>"
                                             href="#"
                                             <?php // translators: %s - The license name and version. ?>
-                                            aria-label="<?php echo esc_attr( sprintf( __( 'Update %s now', 'slswcclient' ), esc_attr( $name_version ) ) ); ?>"
+                                            aria-label="<?php echo esc_attr( sprintf( __( 'Update %s now', 'slswc-client' ), esc_attr( $name_version ) ) ); ?>"
                                             data-name="<?php echo esc_attr( $name_version ); ?>"
                                             data-nonce="<?php echo esc_attr( wp_create_nonce( 'slswc_client_install_' . $product['slug'] ) ); ?>"
                                             role="button"
@@ -2113,9 +2113,9 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                                         <a href="<?php echo esc_url( admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $product['slug'] . '&section=changelog&TB_iframe=true&width=772&height=840' ) ); ?>"
                                             class="thickbox open-plugin-details-modal"
                                             <?php // translators: %s - Product name. ?>
-                                            aria-label="<?php echo esc_attr( sprintf( __( 'More information about %s', 'slswcclient' ), esc_attr( $name_version ) ) ); ?>"
+                                            aria-label="<?php echo esc_attr( sprintf( __( 'More information about %s', 'slswc-client' ), esc_attr( $name_version ) ) ); ?>"
                                             data-title="<?php echo esc_attr( $name_version ); ?>">
-                                            <?php echo esc_attr( __( 'More Details', 'slswcclient' ) ); ?>
+                                            <?php echo esc_attr( __( 'More Details', 'slswc-client' ) ); ?>
                                         </a>
                                     </li>
                                 </ul>
@@ -2142,7 +2142,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                 </div>
             <?php else: ?>
                 <div class="no-products">
-                    <p><?php esc_html_e( 'No products in this category yet.', 'slswcclient' ); ?></p>
+                    <p><?php esc_html_e( 'No products in this category yet.', 'slswc-client' ); ?></p>
                 </div>
             <?php endif; ?>
             <?php
@@ -2158,7 +2158,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
         public static function api_form() {
             $keys = self::get_api_keys();
             ?>
-            <h2><?php esc_html_e( 'Downloads API Settings', 'slswcclient' ); ?></h2>
+            <h2><?php esc_html_e( 'Downloads API Settings', 'slswc-client' ); ?></h2>
             <?php if ( empty( $keys ) && ! self::is_connected() ): ?>
                 <?php
                 $username        = isset( $keys['username'] ) ? $keys['username'] : '';
@@ -2166,10 +2166,10 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                 $consumer_secret = isset( $keys['consumer_secret'] ) ? $keys['consumer_secret'] : '';
                 ?>
             <p>
-                <?php esc_html_e( 'The Downloads API allows you to install plugins directly from the Updates Server into your website instead of downloading and uploading manually.', 'slswcclient' ); ?>
+                <?php esc_html_e( 'The Downloads API allows you to install plugins directly from the Updates Server into your website instead of downloading and uploading manually.', 'slswc-client' ); ?>
             </p>
             <p class="about-text">
-                <?php esc_html_e( 'Enter API details then save to proceed to the next step to connect', 'slswcclient' ); ?>
+                <?php esc_html_e( 'Enter API details then save to proceed to the next step to connect', 'slswc-client' ); ?>
             </p>
             <form name="api-keys" method="post" action="">
                 <?php wp_nonce_field( 'save_api_keys', 'save_api_keys_nonce' ); ?>
@@ -2177,7 +2177,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                 <table class="form-table">
                     <tbody>
                         <tr>
-                            <th><?php esc_html_e( 'Username', 'slswcclient' ); ?></th>
+                            <th><?php esc_html_e( 'Username', 'slswc-client' ); ?></th>
                             <td>
                                 <input type="text"
                                         name="username"
@@ -2186,7 +2186,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                             </td>
                         </tr>
                         <tr>
-                            <th><?php esc_html_e( 'Consumer Key', 'slswcclient' ); ?></th>
+                            <th><?php esc_html_e( 'Consumer Key', 'slswc-client' ); ?></th>
                             <td>
                                 <input type="password"
                                         name="consumer_key"
@@ -2195,7 +2195,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                             </td>
                         </tr>
                         <tr>
-                            <th><?php esc_html_e( 'Consumer Secret', 'slswcclient' ); ?></th>
+                            <th><?php esc_html_e( 'Consumer Secret', 'slswc-client' ); ?></th>
                             <td>
                                 <input type="password"
                                         name="consumer_secret"
@@ -2221,11 +2221,11 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
             <?php elseif ( ! empty( $keys ) && ! self::is_connected() ): ?>
                 <form name="connect" method="post" action="">
                     <?php wp_nonce_field( 'connect', 'connect_nonce' ); ?>
-                    <p><?php esc_html_e( 'Click on the button to connect your account now.', 'slswcclient' ); ?></p>
+                    <p><?php esc_html_e( 'Click on the button to connect your account now.', 'slswc-client' ); ?></p>
                     <input type="submit"
                             id="connect"
                             class="button button-primary"
-                            value="<?php esc_attr_e( 'Connect Account Now', 'slswcclient' ); ?>"
+                            value="<?php esc_attr_e( 'Connect Account Now', 'slswc-client' ); ?>"
                     />
                 </form>
 
@@ -2235,19 +2235,19 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                     <input type="submit"
                             id="reset_api_settings"
                             class="button"
-                            value="<?php esc_attr_e( 'Reset API Keys', 'slswcclient' ); ?>"
+                            value="<?php esc_attr_e( 'Reset API Keys', 'slswc-client' ); ?>"
                     />
                 </form>
 
             <?php else: ?>
-                <p><?php esc_html_e( 'Your account is connected.', 'slswcclient' ); ?></p>
-                <p><?php esc_html_e( 'You should be able to see a list of your purchased products and get convenient automatic updates.', 'slswcclient' ); ?></p>
+                <p><?php esc_html_e( 'Your account is connected.', 'slswc-client' ); ?></p>
+                <p><?php esc_html_e( 'You should be able to see a list of your purchased products and get convenient automatic updates.', 'slswc-client' ); ?></p>
                 <form name="disconnect" method="post" action="">
                     <?php wp_nonce_field( 'disconnect', 'disconnect_nonce' ); ?>
                     <input type="submit"
                             id="disconnect"
                             class="button button-primary"
-                            value="<?php esc_attr_e( 'Disconnect', 'slswcclient' ); ?>"
+                            value="<?php esc_attr_e( 'Disconnect', 'slswc-client' ); ?>"
                     />
                 </form>
             <?php endif; ?>
@@ -2283,17 +2283,17 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
             $compatible = version_compare( $version, $wp_version ) >= 0 ? true : false;
 
             if ( $compatible ) {
-                $compatibility_label = __( 'Compatible', 'slswcclient' );
+                $compatibility_label = __( 'Compatible', 'slswc-client' );
                 $compatibility_class = 'compatible';
             } else {
-                $compatibility_label = __( 'Not compatible', 'slswcclient' );
+                $compatibility_label = __( 'Not compatible', 'slswc-client' );
                 $compatibility_class = 'incompatible';
             }
             ?>
             <span class="compatibility-<?php echo esc_attr( $compatibility_class ); ?>">
                 <strong><?php echo esc_html( $compatibility_label ); ?></strong>
                 <?php
-                esc_html_e( ' with your version of WordPress', 'slswcclient' );
+                esc_html_e( ' with your version of WordPress', 'slswc-client' );
                 ?>
             </span>
             <?php
@@ -2303,7 +2303,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          * License activated field.
          *
          * @since 1.0.0
-         * @since 1.0.1
+         * @since 1.0.0
          * @version 1.0.0
          *
          * @param string $status The license status.
@@ -2326,14 +2326,14 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
             return apply_filters(
                 'slswc_license_status_types',
                 array(
-                    'valid'           => __( 'Valid', 'slswcclient' ),
-                    'deactivated'     => __( 'Deactivated', 'slswcclient' ),
-                    'max_activations' => __( 'Max Activations reached', 'slswcclient' ),
-                    'invalid'         => __( 'Invalid', 'slswcclient' ),
-                    'inactive'        => __( 'Inactive', 'slswcclient' ),
-                    'active'          => __( 'Active', 'slswcclient' ),
-                    'expiring'        => __( 'Expiring', 'slswcclient' ),
-                    'expired'         => __( 'Expired', 'slswcclient' ),
+                    'valid'           => __( 'Valid', 'slswc-client' ),
+                    'deactivated'     => __( 'Deactivated', 'slswc-client' ),
+                    'max_activations' => __( 'Max Activations reached', 'slswc-client' ),
+                    'invalid'         => __( 'Invalid', 'slswc-client' ),
+                    'inactive'        => __( 'Inactive', 'slswc-client' ),
+                    'active'          => __( 'Active', 'slswc-client' ),
+                    'expiring'        => __( 'Expiring', 'slswc-client' ),
+                    'expired'         => __( 'Expired', 'slswc-client' ),
                 )
             );
         }
@@ -2836,7 +2836,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                         $response->get_error_code(),
                         sprintf(
                             // translators: 1. Error message.
-                            __( 'HTTP Error: %s', 'slswcclient' ),
+                            __( 'HTTP Error: %s', 'slswc-client' ),
                             $response->get_error_message()
                         )
                     );
@@ -2844,7 +2844,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
 
                 // There was a problem with the initial request.
                 if ( ! isset( $response['response']['code'] ) ) {
-                    return new WP_Error( 'slswc_no_response_code', __( 'wp_safe_remote_get() returned an unexpected result.', 'slswcclient' ) );
+                    return new WP_Error( 'slswc_no_response_code', __( 'wp_safe_remote_get() returned an unexpected result.', 'slswc-client' ) );
                 }
 
                 // There is a validation error on the server side, output the problem.
@@ -2861,7 +2861,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                         'slswc_validation_failed',
                         sprintf(
                             // translators: %s: Error/response message.
-                            __( 'There was a problem with your license: %s', 'slswcclient' ),
+                            __( 'There was a problem with your license: %s', 'slswc-client' ),
                             $response_message
                         )
                     );
@@ -2873,7 +2873,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                         'slswc_internal_server_error',
                         sprintf(
                             // translators: %s: the http response code from the server.
-                            __( 'There was a problem with the license server: HTTP response code is : %s', 'slswcclient' ),
+                            __( 'There was a problem with the license server: HTTP response code is : %s', 'slswc-client' ),
                             $response['response']['code']
                         )
                     );
@@ -2883,7 +2883,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                     return new WP_Error(
                         'slswc_unexpected_response_code',
                         sprintf(
-                            __( 'HTTP response code is : % s, expecting ( 200 )', 'slswcclient' ),
+                            __( 'HTTP response code is : % s, expecting ( 200 )', 'slswc-client' ),
                             $response['response']['code']
                         )
                     );
@@ -2892,7 +2892,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                 if ( empty( $response['body'] ) ) {
                     return new WP_Error(
                         'slswc_no_response',
-                        __( 'The server returned no response.', 'slswcclient' )
+                        __( 'The server returned no response.', 'slswc-client' )
                     );
                 }
 
@@ -2925,12 +2925,12 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          * Install a product.
          *
          * @param string $slug    Product slug.
-         * @param string $package The product download url.
+         * @param string $download_url The product download url.
          *
          * @since   1.0.0
          * @version 1.0.0
          */
-        public static function product_background_installer( $slug = '', $package = '' ) {
+        public static function product_background_installer( $slug = '', $download_url = '' ) {
             global $wp_filesystem;
 
             $slug = isset( $_REQUEST['slug'] ) ? wp_unslash( sanitize_text_field( wp_unslash( $_REQUEST['slug'] ) ) ) : '';
@@ -2939,7 +2939,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                 && isset( $_REQUEST ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'slswc_client_install_' . $slug ) ) {
                 wp_send_json_error(
                     array(
-                        'message' => esc_attr__( 'Failed to install product. Security token invalid.', 'slswcclient' ),
+                        'message' => esc_attr__( 'Failed to install product. Security token invalid.', 'slswc-client' ),
                     )
                 );
             }
@@ -2988,7 +2988,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                                     array(
                                         'message' => sprintf(
                                             // translators: %s - the name of the plugin/theme.
-                                            __( 'Successfully installed new version of %s', 'slswcclient' ),
+                                            __( 'Successfully installed new version of %s', 'slswc-client' ),
                                             $name
                                         ),
                                     )
@@ -2997,7 +2997,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                                 wp_send_json_error(
                                     array(
                                         'slug'    => $slug,
-                                        'message' => __( 'Installation failed. There was an error extracting the downloaded file.', 'slswcclient' ),
+                                        'message' => __( 'Installation failed. There was an error extracting the downloaded file.', 'slswc-client' ),
                                     )
                                 );
                             }
@@ -3009,7 +3009,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                             'slug'    => $slug . '_install_error',
                             'message' => sprintf(
                                 // translators: 1: theme slug, 2: error message, 3: URL to install theme manually.
-                                __( '%1$s could not be installed (%2$s). <a href="%3$s">Please install it manually by clicking here.</a>', 'slswcclient' ),
+                                __( '%1$s could not be installed (%2$s). <a href="%3$s">Please install it manually by clicking here.</a>', 'slswc-client' ),
                                 $slug,
                                 $e->getMessage(),
                                 esc_url( admin_url( 'update.php?action=install-' . $product_type . '&' . $product_type . '=' . $slug . '&_wpnonce=' . wp_create_nonce( 'install-' . $product_type . '_' . $slug ) ) )
@@ -3018,7 +3018,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
                     );
                 }
 
-                wp_send_json_error( array( 'message' => __( 'No action taken.', 'slswcclient' ) ) );
+                wp_send_json_error( array( 'message' => __( 'No action taken.', 'slswc-client' ) ) );
 
                 // Discard feedback.
                 ob_end_clean();
@@ -3026,7 +3026,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
 
             wp_send_json(
                 array(
-                    'message' => __( 'Failed to install product. Download link not provided or is invalid.', 'slswcclient' ),
+                    'message' => __( 'Failed to install product. Download link not provided or is invalid.', 'slswc-client' ),
                 )
             );
         }
@@ -3063,7 +3063,7 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
             $host      = ! empty( $url_parts['host'] ) ? $url_parts['host'] : false;
 
             if ( empty( $url ) || ! $host ) {
-                return apply_filters( 'slswc_client_is_dev', false );
+                return apply_filters( 'slswc_client_is_dev', true );
             }
 
             $is_ip_local = self::is_ip_local( $host );
@@ -3193,8 +3193,8 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          * Get all messages to be added to admin notices.
          *
          * @return array
-         * @version 1.0.2
-         * @since   1.0.2
+         * @version 1.0.0
+         * @since   1.0.0
          */
         public static function get_messages() {
             return self::$messages;
@@ -3207,8 +3207,8 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          * @param string $message The message to be added.
          * @param string $type    The type of message to be added.
          * @return void
-         * @version 1.0.2
-         * @since   1.0.2
+         * @version 1.0.0
+         * @since   1.0.0
          */
         public static function add_message( $key, $message, $type = 'success' ) {
             self::$messages[] = array(
@@ -3222,8 +3222,8 @@ if ( ! class_exists( 'SLSWC_Client_Manager' ) ):
          * Display license update messages.
          *
          * @return void
-         * @version 1.0.2
-         * @since   1.0.2
+         * @version 1.0.0
+         * @since   1.0.0
          */
         public static function display_messages() {
             if ( empty( self::$messages ) ) {
@@ -3350,7 +3350,7 @@ if ( ! function_exists( 'slswc_client_admin_script' ) ) {
                         if ( undefined != '<?php echo esc_attr( $slug ); ?>' && src.includes( '<?php echo esc_attr( $slug ); ?>' ) ) {
                             <?php $url = esc_url_raw( $details['license_server_url'] ) . 'products/' . esc_attr( $slug ) . '/#reviews'; ?>
                             <?php // translators: %s - The url to visit. ?>
-                            $( '#plugin-information' ).find( '.fyi-description' ).html( '<?php echo wp_kses_post( sprintf( __( 'To read all the reviews or write your own visit the <a href="%s">product page</a>.', 'slswcclient' ), $url ) ); ?>');
+                            $( '#plugin-information' ).find( '.fyi-description' ).html( '<?php echo wp_kses_post( sprintf( __( 'To read all the reviews or write your own visit the <a href="%s">product page</a>.', 'slswc-client' ), $url ) ); ?>');
                             $( '#plugin-information' ).find( '.counter-label a' ).each( function() {
                                 $(this).attr( 'href', '<?php echo esc_attr( $url ); ?>' );
                             } );

@@ -2,8 +2,8 @@
 /**
  * Defines the helper class for client
  *
- * @version     1.0.2
- * @since       1.0.2
+ * @version     1.0.0
+ * @since       1.0.0
  * @package     Client
  * @link        https://licenseserver.io/
  */
@@ -17,16 +17,16 @@ use DateTimeZone;
 /**
  * Helper class with static helper methods
  *
- * @version 1.1.0
- * @since   1.1.0 - Refactored into classes and converted into a composer package.
+ * @version 1.0.0
+ * @since   1.0.0
  */
 class Helper {
     /**
      * Check if the account is connected to the api
      *
      * @return  boolean
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     * @version 1.1.0
+     * @since   1.0.0
+     * @version 1.0.0
      */
     public static function is_connected() {
         $is_connected = get_option( 'slswc_api_connected', 'no' );
@@ -37,8 +37,8 @@ class Helper {
      * Get the API Keys stored in database
      *
      * @return  array
-     * @since   1.1.0 - Refactored into classes and converted into a composer package. - Moved from client manager class
-     * @version 1.1.0
+     * @since   1.0.0
+     * @version 1.0.0
      */
     public static function get_api_keys() {
         return array_filter(
@@ -57,8 +57,8 @@ class Helper {
      * @param array  $args          Default details
      * @param string $software_type The type of software. plugin|theme
      * @return array
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public static function get_file_details( $base_file, $args = array(), $software_type = 'plugin' ) {
         return self::recursive_parse_args(
@@ -73,8 +73,8 @@ class Helper {
      * @param   string $base_file - Plugin file or theme slug.
      * @param   string $type - Product type. plugin|theme.
      * @return  array
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     * @version 1.1.0
+     * @since   1.0.0
+     * @version 1.0.0
      */
     public static function get_file_information( $base_file, $type = 'plugin' ) {
         $data = array();
@@ -103,8 +103,8 @@ class Helper {
      * @param array  $data The data to format.
      * @param string $file The plugin file.
      * @return array
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public static function format_plugin_data( $data, $file = '' ) {
         $formatted_data = array(
@@ -141,8 +141,8 @@ class Helper {
      * @param array $local Local product data.
      * @param array $remote Remote product data.
      * @return array
-     * @version 1.1.0
-     * @since   1.1.0
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public static function map_remote_product( $local, $remote ) {
         $remote = (array) $remote;
@@ -164,8 +164,8 @@ class Helper {
      * @param object $theme The theme object.
      * @param string $theme_file The theme file.
      * @return array
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public static function format_theme_data( $theme, $theme_file ) {
         $formatted_data = array(
@@ -224,8 +224,8 @@ class Helper {
      * @param string $slug    Product slug.
      * @param string $package The product download url.
      *
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     * @version 1.1.0
+     * @since   1.0.0
+     * @version 1.0.0
      */
     public static function product_background_installer( $slug = '', $package = '' ) { // phpcs:ignore
         global $wp_filesystem;
@@ -236,7 +236,7 @@ class Helper {
             && isset( $_REQUEST ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'slswc_client_install_' . $slug ) ) {
             wp_send_json_error(
                 array(
-                    'message' => esc_attr__( 'Failed to install product. Security token invalid.', 'slswcclient' ),
+                    'message' => esc_attr__( 'Failed to install product. Security token invalid.', 'slswc-client' ),
                 )
             );
         }
@@ -285,7 +285,7 @@ class Helper {
                                 array(
                                     'message' => sprintf(
                                         // translators: %s - the name of the plugin/theme.
-                                        __( 'Successfully installed new version of %s', 'slswcclient' ),
+                                        __( 'Successfully installed new version of %s', 'slswc-client' ),
                                         $name
                                     ),
                                 )
@@ -294,7 +294,7 @@ class Helper {
                             wp_send_json_error(
                                 array(
                                     'slug'    => $slug,
-                                    'message' => __( 'Installation failed. There was an error extracting the downloaded file.', 'slswcclient' ),
+                                    'message' => __( 'Installation failed. There was an error extracting the downloaded file.', 'slswc-client' ),
                                 )
                             );
                         }
@@ -306,7 +306,7 @@ class Helper {
                         'slug'    => $slug . '_install_error',
                         'message' => sprintf(
                             // translators: 1: theme slug, 2: error message, 3: URL to install theme manually.
-                            __( '%1$s could not be installed (%2$s). <a href="%3$s">Please install it manually by clicking here.</a>', 'slswcclient' ),
+                            __( '%1$s could not be installed (%2$s). <a href="%3$s">Please install it manually by clicking here.</a>', 'slswc-client' ),
                             $slug,
                             $e->getMessage(),
                             esc_url( admin_url( 'update.php?action=install-' . $product_type . '&' . $product_type . '=' . $slug . '&_wpnonce=' . wp_create_nonce( 'install-' . $product_type . '_' . $slug ) ) )
@@ -315,7 +315,7 @@ class Helper {
                 );
             }
 
-            wp_send_json_error( array( 'message' => __( 'No action taken.', 'slswcclient' ) ) );
+            wp_send_json_error( array( 'message' => __( 'No action taken.', 'slswc-client' ) ) );
 
             // Discard feedback.
             ob_end_clean();
@@ -323,7 +323,7 @@ class Helper {
 
         wp_send_json(
             array(
-                'message' => __( 'Failed to install product. Download link not provided or is invalid.', 'slswcclient' ),
+                'message' => __( 'Failed to install product. Download link not provided or is invalid.', 'slswc-client' ),
             )
         );
     }
@@ -334,8 +334,8 @@ class Helper {
      * @param string $url The url to be checked.
      * @param string $environment The user specified environment of the url.
      * @return boolean
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public static function is_dev( $url = '', $environment = '' ) {
         $is_dev = false;
@@ -384,8 +384,8 @@ class Helper {
      *
      * @param string $host The host to be checked.
      * @return boolean
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public static function is_ip_local( $host ) {
         if ( 'localhost' === $host ) {
@@ -406,21 +406,25 @@ class Helper {
      *
      * @param string $host The host to be checked.
      * @return boolean
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public static function is_tld_dev( $host ) {
         $tlds_to_check = apply_filters(
             'slswc_client_url_tlds',
             array(
                 '.dev',
+                '.dev.cc',       // DesktopServer
                 '.local',
                 '.test',
+                '.staging',
+                '.example',      // RFC 2606 reserved
+                '.invalid',      // RFC 2606 reserved
             )
         );
 
         foreach ( $tlds_to_check as $tld ) {
-            if ( false !== strpos( $host, $tld ) ) {
+            if ( substr( $host, -strlen( $tld ) ) === $tld ) {
                 return true;
             }
         }
@@ -433,8 +437,8 @@ class Helper {
      *
      * @param string $host The domain to be checked.
      * @return boolean
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public static function is_subdomain_dev( $host ) {
         if ( substr_count( $host, '.' ) <= 1 ) {
@@ -444,20 +448,48 @@ class Helper {
         $subdomains_to_check = apply_filters(
             'slswc_client_url_subdomains',
             array(
+                // Subdomain prefixes.
+                'local.',
                 'dev.',
+                'test.',
+                'stage.',
+                'staging.',
+                'staging*.',     // SiteGround stagingN pattern
+                'staging-*.',
                 '*.staging.',
                 '*.test.',
-                'staging-*.',
-                '*.wpengine.com',
-                '*.easywp.com',
+
+                // Hosting provider domains.
+                '*.wpengine.com',            // WP Engine
+                '*.easywp.com',              // EasyWP
+                '*.myftpupload.com',         // GoDaddy
+                '*.cloudwaysapps.com',       // Cloudways
+                '*.wpsandbox.pro',           // WPSandbox
+                '*.ngrok.io',                // Tunneling
+                '*.ngrok-free.app',          // ngrok v3
+                '*.mystagingwebsite.com',    // Pressable
+                '*.tempurl.host',            // WPMU DEV
+                '*.wpmudev.host',            // WPMU DEV
+                '*.websitepro-staging.com',  // Vendasta
+                '*.websitepro.hosting',      // Vendasta
+                '*.instawp.xyz',             // InstaWP
+                '*.instawp.co',              // InstaWP
+                '*.pantheonsite.io',         // Pantheon
+                '*.kinsta.cloud',            // Kinsta
+                '*.flywheelsites.com',       // Flywheel
+                '*.flywheelstaging.com',     // Flywheel staging
+                '*.wpcomstaging.com',        // WordPress.com staging
+                '*.jurassic.ninja',          // Jurassic Ninja
+                '*.lndo.site',              // Lando
+                '*.ddev.site',              // DDEV
             )
         );
 
         foreach ( $subdomains_to_check as $subdomain ) {
-            $subdomain = str_replace( '.', '(.)', $subdomain );
-            $subdomain = str_replace( array( '*', '(.)' ), '(.*)', $subdomain );
+            $pattern = preg_quote( $subdomain, '/' );
+            $pattern = str_replace( '\\*', '(.*)', $pattern );
 
-            if ( preg_match( '/^(' . $subdomain . ')/', $host ) ) {
+            if ( preg_match( '/^' . $pattern . '/', $host ) ) {
                 return true;
             }
         }
@@ -468,21 +500,21 @@ class Helper {
     /**
      * The available license status types
      *
-     * @since   1.1.0 - Refactored into classes and converted into a composer package. - Moved from ClientManager class
-     * @version 1.1.0
+     * @since   1.0.0
+     * @version 1.0.0
      */
     public static function license_status_types() {
         return apply_filters(
             'slswc_license_status_types',
             array(
-                'valid'           => __( 'Valid', 'slswcclient' ),
-                'deactivated'     => __( 'Deactivated', 'slswcclient' ),
-                'max_activations' => __( 'Max Activations reached', 'slswcclient' ),
-                'invalid'         => __( 'Invalid', 'slswcclient' ),
-                'inactive'        => __( 'Inactive', 'slswcclient' ),
-                'active'          => __( 'Active', 'slswcclient' ),
-                'expiring'        => __( 'Expiring', 'slswcclient' ),
-                'expired'         => __( 'Expired', 'slswcclient' ),
+                'valid'           => __( 'Valid', 'slswc-client' ),
+                'deactivated'     => __( 'Deactivated', 'slswc-client' ),
+                'max_activations' => __( 'Max Activations reached', 'slswc-client' ),
+                'invalid'         => __( 'Invalid', 'slswc-client' ),
+                'inactive'        => __( 'Inactive', 'slswc-client' ),
+                'active'          => __( 'Active', 'slswc-client' ),
+                'expiring'        => __( 'Expiring', 'slswc-client' ),
+                'expired'         => __( 'Expired', 'slswc-client' ),
             )
         );
     }
@@ -490,8 +522,8 @@ class Helper {
     /**
      * Class logger so that we can keep our debug and logging information cleaner
      *
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      * @param mixed $data - The data to go to the error log.
      */
     public static function log( $data ) {
@@ -512,8 +544,8 @@ class Helper {
 	 *
 	 * @param   array $headers The extra theme/plugin headers.
 	 * @return  array
-	 * @since   1.1.0 - Refactored into classes and converted into a composer package.
-	 * @version 1.1.0
+	 * @since   1.0.0
+	 * @version 1.0.0
 	 */
 	public static function extra_headers( $headers ) {
 
@@ -549,7 +581,7 @@ class Helper {
      *
      * @param string $date_string The date string.
      * @return int $timestamp The timestamp of the given date string.
-     * @version 1.1.0
+     * @version 1.0.0
      */
     public static function date_to_time( $date_string ) {
 

@@ -2,8 +2,8 @@
 /**
  * Defines the plugin updater class
  *
- * @version     1.1.0
- * @since       1.1.0
+ * @version     1.0.0
+ * @since       1.0.0
  * @package     Client
  * @link        https://licenseserver.io/
  */
@@ -13,8 +13,8 @@ namespace SLSWC\Client;
 /**
  * Plugin updater class
  *
- * @version 1.1.0
- * @since   1.1.0
+ * @version 1.0.0
+ * @since   1.0.0
  */
 class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface {
 
@@ -22,8 +22,8 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
      * The plugin file
      *
      * @var string
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public $plugin_file;
 
@@ -31,8 +31,8 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
      * The dir and file of the plugin
      *
      * @var string
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public $plugin_dir_file;
 
@@ -40,7 +40,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
      * DRM configuration array (if DRM is enabled).
      *
      * @var array|null
-     * @since 1.2.0
+     * @since 1.0.0
      */
     private $drm_config = null;
 
@@ -48,15 +48,15 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
      * DRM enforcer instance.
      *
      * @var DRM|null
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public $drm = null;
 
     /**
      * Get an instance of this class..
      *
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     * @version 1.1.0
+     * @since   1.0.0
+     * @version 1.0.0
      * @param   string $license_server_url - The base url to your WooCommerce shop.
      * @param   string $base_file          - path to the plugin file or directory, relative to the plugins directory.
      * @param   array  $args               - array of additional arguments to override default ones.
@@ -72,8 +72,8 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
     /**
      * Initialize the class.
      *
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     * @version 1.1.0
+     * @since   1.0.0
+     * @version 1.0.0
      * @param   string $license_server_url - The base url to your WooCommerce shop.
      * @param   string $plugin_file - path to the plugin file or directory, relative to the plugins directory.
      * @param   array  $args        - array of additional arguments to override default ones.
@@ -111,8 +111,8 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
      * Initialize Hooks
      *
      * @return void
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function init_hooks() {
         add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'update_check' ) );
@@ -122,7 +122,10 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
         add_filter( 'site_transient_update_plugins', array( $this, 'change_update_information' ) );
         add_filter( 'transient_update_plugins', array( $this, 'change_update_information' ) );
         add_action( 'in_plugin_update_message-' . $this->plugin_dir_file, array( $this, 'need_license_message' ), 10, 2 );
+        add_filter( 'plugin_action_links_' . $this->plugin_dir_file, array( $this, 'plugin_action_links' ) );
         add_filter( 'http_request_host_is_external', array( $this, 'fix_update_host' ), 10, 2 );
+        add_action( 'admin_init', array( $this, 'process_manual_update_check' ) );
+        add_action( 'admin_notices', array( $this, 'show_manual_update_check_result' ) );
 
         // Initialize DRM if configured.
         if ( ! empty( $this->drm_config ) ) {
@@ -134,7 +137,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
     /**
      * Get the DRM enforcer instance.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @return DRM|null
      */
     public function get_drm() {
@@ -154,7 +157,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
      * @return bool
      */
     public function fix_update_host( $allow, $host ) {
-        $license_server_host = @wp_parse_url( $this->license_server_url, PHP_URL_HOST );
+        $license_server_host = wp_parse_url( $this->license_server_url, PHP_URL_HOST );
 
         if ( strtolower( $host ) === strtolower( $license_server_host ) ) {
             return true;
@@ -166,8 +169,8 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
      * Get the plugin folder and base name based on the file path
      *
      * @return string
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function plugin_dir_file() {
         $plugin_folder = '';
@@ -192,12 +195,12 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
     /**
      * Check for updates with the license server.
      *
-     * @since  1.1.0
+     * @since  1.0.0
      * @param  object $transient object from the update api.
      * @return object $transient object possibly modified.
      */
     public function update_check( $transient ) {
-        Helper::log( 'Update check: ' . print_r( $this->get_license_details(), true ) );
+        Helper::log( $this->get_license_details() );
 
         if ( empty( $transient->checked ) ) {
             return $transient;
@@ -243,7 +246,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
     /**
      * Add the plugin information to the WordPress Update API.
      *
-     * @since  1.1.0
+     * @since  1.0.0
      * @param  bool|object $result The result object. Default false.
      * @param  string      $action The type of information being requested from the Plugin Install API.
      * @param  object      $args Plugin API arguments.
@@ -274,7 +277,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
         $plugin_update_info->banners  = (array) $plugin_update_info->banners;
         $plugin_update_info->ratings  = (array) $plugin_update_info->ratings;
         if ( isset( $plugin_update_info ) && is_object( $plugin_update_info ) && false !== $plugin_update_info ) {
-            Helper::log( 'Plugin update info: ' . print_r( $plugin_update_info, true ) );
+            Helper::log( $plugin_update_info );
             return $plugin_update_info;
         }
 
@@ -285,7 +288,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
      * Add a check for update link on the plugins page. You can change the link with the supplied filter.
      * returning an empty string will disable this link
      *
-     * @since 1.1.0
+     * @since 1.0.0
      * @param array  $links The array having default links for the plugin.
      * @param string $file The name of the plugin file.
      */
@@ -305,7 +308,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
 
             $update_link_text = apply_filters(
                 'slswc_update_link_text_' . $this->get_text_domain(),
-                __( 'Check for updates', 'slswcclient' )
+                __( 'Check for updates', 'slswc-client' )
             );
 
             if ( ! empty( $update_link_text ) ) {
@@ -321,8 +324,8 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
      *
      * @param object $transient The transient object.
      * @return object $transient The possibly modified transient object.
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function change_update_information( $transient ) {
         // If we are on the update core page, change the update message for unlicensed products
@@ -330,11 +333,11 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
         $update_core = ( 'update-core.php' === $pagenow ) ? true : false;
 
         if ( $update_core && $transient && isset( $transient->response ) && ! isset( $_GET['action'] ) ) {
-            Helper::log( 'Change plugin update information. Current transient: ' . print_r( $transient, true ) );
+            Helper::log( $transient );
 
             $notice_text = __(
                 'To enable this update please activate your license in Settings > License Manager page.',
-                'slswcclient'
+                'slswc-client'
             );
 
             if ( ! isset( $transient->response[ $this->plugin_dir_file ] ) ) {
@@ -346,7 +349,7 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
 
             $plugin_response->plugin = $this->plugin_dir_file;
 
-            $plugin_has_update = isset( $plugin_response ) && isset( $plugin_response->package ) ? true : false;
+            $plugin_has_update = isset( $plugin_response->package );
 
             Helper::log( 'Plugin response: ' . print_r( $plugin_response, true ) );
 
@@ -365,13 +368,35 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
     }
 
     /**
+     * Add license status to plugin action links.
+     *
+     * @param array $links The existing action links.
+     * @return array
+     * @since 1.0.0
+     */
+    public function plugin_action_links( $links ) {
+        $status = $this->license->get_license_status();
+
+        if ( ! in_array( $status, array( 'active', 'expiring' ), true ) ) {
+            $license_link = sprintf(
+                '<a href="%s" style="color: #d63638;">%s</a>',
+                esc_url( admin_url( 'admin.php?page=slswc_license_manager' ) ),
+                esc_html__( 'Activate License', 'slswc-client' )
+            );
+            array_unshift( $links, $license_link );
+        }
+
+        return $links;
+    }
+
+    /**
      * Add action for queued products to display message for unlicensed products.
      *
      * @param array  $plugin_data The update data.
      * @param object $update      The update object.
      * @return void
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function need_license_message( $plugin_data, $update ) {
         if ( ! empty( $update->package ) ) {
@@ -381,8 +406,87 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
         echo wp_kses_post(
             sprintf(
                 '<div class="slswcclient-plugin-upgrade-notice">%s</div>',
-                __( 'To enable this update please activate your license', 'slswcclient' )
+                __( 'To enable this update please activate your license', 'slswc-client' )
             )
+        );
+    }
+
+    /**
+     * Process a manual update check request from the plugins page.
+     *
+     * @since 1.0.0
+     */
+    public function process_manual_update_check() {
+        if ( ! isset( $_GET['slswc_check_for_update'] ) ) {
+            return;
+        }
+
+        $slug = isset( $_GET['slswc_slug'] ) ? sanitize_text_field( wp_unslash( $_GET['slswc_slug'] ) ) : '';
+
+        if ( $slug !== $this->get_text_domain() ) {
+            return;
+        }
+
+        check_admin_referer( 'slswc_check_for_update' );
+
+        if ( ! current_user_can( 'update_plugins' ) ) {
+            return;
+        }
+
+        $response = $this->client->request( 'check_update', $this->get_license_details() );
+
+        $has_update = false;
+
+        if ( $this->license->check_license( $response ) && isset( $response->software_details ) ) {
+            if ( version_compare( $response->software_details->new_version, $this->get_version(), '>' ) ) {
+                $has_update = true;
+            }
+        }
+
+        delete_site_transient( 'update_plugins' );
+
+        wp_safe_redirect(
+            add_query_arg(
+                'slswc_update_result',
+                $has_update ? 'yes' : 'no',
+                self_admin_url( 'plugins.php' )
+            )
+        );
+        exit;
+    }
+
+    /**
+     * Show the result of a manual update check.
+     *
+     * @since 1.0.0
+     */
+    public function show_manual_update_check_result() {
+        if ( ! isset( $_GET['slswc_update_result'] ) ) {
+            return;
+        }
+
+        $result = sanitize_text_field( wp_unslash( $_GET['slswc_update_result'] ) );
+
+        if ( 'yes' === $result ) {
+            $message = sprintf(
+                /* translators: %s: plugin text domain */
+                __( 'An update is available for %s.', 'slswc-client' ),
+                '<strong>' . esc_html( $this->get_text_domain() ) . '</strong>'
+            );
+            $class = 'notice-info';
+        } else {
+            $message = sprintf(
+                /* translators: %s: plugin text domain */
+                __( '%s is up to date.', 'slswc-client' ),
+                '<strong>' . esc_html( $this->get_text_domain() ) . '</strong>'
+            );
+            $class = 'notice-success';
+        }
+
+        printf(
+            '<div class="notice %s is-dismissible"><p>%s</p></div>',
+            esc_attr( $class ),
+            wp_kses_post( $message )
         );
     }
 }

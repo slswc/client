@@ -6,8 +6,8 @@
  * after a configurable number of days without a valid license.
  * Front-end functionality is never affected.
  *
- * @since   1.2.0
- * @package SLSWC_Client
+ * @since   1.0.0
+ * @package SLSWC\Client
  * @link    https://licenseserver.io/
  */
 
@@ -19,7 +19,7 @@ namespace SLSWC\Client;
  * Grace-period state machine, escalating notices,
  * interstitial lock, and scheduled license-check callback.
  *
- * @since 1.2.0
+ * @since 1.0.0
  */
 class DRM {
 
@@ -50,24 +50,24 @@ class DRM {
      * @var array
      */
     private static $defaults = array(
-        'enabled'           => true,
-        'identifier'        => '',
-        'product_name'      => '',
-        'parent_menu_slug'  => '',
-        'page_hook_prefix'  => '',  // WordPress sanitized menu title used in load- hooks (e.g. 'license-server').
-        'submenu_slugs'     => array(),
-        'license_page_url'  => '',
-        'purchase_url'      => '',
-        'logo_url'          => '',
-        'grace_soft_days'   => 2,
-        'grace_lock_days'   => 7,
-        'text_domain'       => 'slswcclient',
+        'enabled'          => true,
+        'identifier'       => '',
+        'product_name'     => '',
+        'parent_menu_slug' => '',
+        'page_hook_prefix' => '',  // WordPress sanitized menu title used in load- hooks (e.g. 'license-server').
+        'submenu_slugs'    => array(),
+        'license_page_url' => '',
+        'purchase_url'     => '',
+        'logo_url'         => '',
+        'grace_soft_days'  => 2,
+        'grace_lock_days'  => 7,
+        'text_domain'      => 'slswc-client',
     );
 
     /**
      * Constructor.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      * @param array                 $config  DRM configuration.
      * @param GenericSoftwareUpdater $updater Parent updater instance.
      */
@@ -87,7 +87,7 @@ class DRM {
     /**
      * Register all hooks.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public function run() {
         if ( ! $this->config['enabled'] || ! is_admin() ) {
@@ -96,7 +96,8 @@ class DRM {
 
         $slug = $this->config['identifier'];
 
-        // Admin notices.
+        // Admin notices — styles hooked to head so the notice echo can use wp_kses.
+        add_action( 'admin_head', array( $this, 'output_notice_styles' ) );
         add_action( 'admin_notices', array( $this, 'maybe_show_notices' ) );
 
         // Interstitial: intercept submenu page loads when locked.
@@ -129,7 +130,7 @@ class DRM {
     /**
      * Whether the license is currently activated.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @return bool
      */
     public function is_license_activated() {
@@ -143,7 +144,7 @@ class DRM {
      * Initialises the timestamp on first call so the grace clock starts
      * from when DRM is first active, not from epoch zero.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @return int
      */
     public function get_days_without_license() {
@@ -162,7 +163,7 @@ class DRM {
      *
      * Cached for the lifetime of the request.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @return string 'ok' | 'grace_soft' | 'grace_hard' | 'locked'
      */
     public function get_drm_state() {
@@ -204,7 +205,7 @@ class DRM {
      * - 'disabled'       → disabled notice (license was revoked)
      * - anything else    → no-license notice (grace period countdown)
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public function maybe_show_notices() {
         if ( ! current_user_can( 'manage_options' ) ) {
@@ -244,7 +245,7 @@ class DRM {
         $notice_html = apply_filters( 'slswc_drm_notice_html_' . $slug, $notice_html, $state, $license_status, $this );
 
         if ( ! empty( $notice_html ) ) {
-            echo $notice_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML built with proper escaping below.
+            echo wp_kses( $notice_html, $this->allowed_notice_tags() );
             $this->output_dismiss_script();
         }
     }
@@ -252,7 +253,7 @@ class DRM {
     /**
      * Whether a notice should currently be visible.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @param  string $flag_key Option key suffix.
      * @return bool
      */
@@ -268,7 +269,7 @@ class DRM {
     /**
      * Intercept admin page loads when locked.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public function intercept_admin_page() {
         if ( 'locked' !== $this->get_drm_state() ) {
@@ -285,10 +286,16 @@ class DRM {
 
         require_once ABSPATH . 'wp-admin/admin-header.php';
 
-        $html = $this->render_interstitial();
-        $html = apply_filters( 'slswc_drm_interstitial_html_' . $this->config['identifier'], $html, $this );
+        // Static CSS — output directly before the filterable markup.
+        echo $this->render_interstitial_styles(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static CSS, no user input.
 
-        echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        // Filterable HTML markup only (no CSS or script).
+        $html = $this->render_interstitial_html();
+        $html = apply_filters( 'slswc_drm_interstitial_html_' . $this->config['identifier'], $html, $this );
+        echo wp_kses( $html, $this->allowed_notice_tags() );
+
+        // Static JS — output directly after the filterable markup.
+        echo $this->render_interstitial_script(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static JS with esc_js() strings.
 
         require_once ABSPATH . 'wp-admin/admin-footer.php';
         exit;
@@ -301,7 +308,7 @@ class DRM {
     /**
      * Schedule the recurring license check via wp-cron if not already scheduled.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     private function maybe_schedule_license_check() {
         $hook = 'slswc_drm_license_check_' . $this->config['identifier'];
@@ -322,7 +329,7 @@ class DRM {
      *
      * Runs as a wp-cron job — there may be no current user in this context.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public function run_license_check() {
         $license_details = $this->updater->get_license_details();
@@ -352,8 +359,11 @@ class DRM {
 
         // Update the license details object.
         $this->updater->license->set_license_status( $status );
-        if ( isset( $response->expires ) ) {
-            $this->updater->license->set_license_expires( $response->expires );
+        $expires = is_object( $response ) && isset( $response->expires )
+            ? $response->expires
+            : ( is_array( $response ) && isset( $response['expires'] ) ? $response['expires'] : null );
+        if ( $expires ) {
+            $this->updater->license->set_license_expires( $expires );
         }
         $this->updater->license->save();
 
@@ -363,7 +373,7 @@ class DRM {
     /**
      * Persist the activated flag and advance the last-check timestamp.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      * @param bool $is_active Whether the license is currently active.
      */
     public function update_license_activated( $is_active ) {
@@ -391,7 +401,7 @@ class DRM {
     /**
      * Dismiss a single DRM notice for 24 hours.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public function ajax_dismiss_notice() {
         check_ajax_referer( 'slswc_drm_' . $this->config['identifier'], 'nonce' );
@@ -421,7 +431,7 @@ class DRM {
     /**
      * Re-run a live license check and return the new DRM state.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public function ajax_refresh_license_status() {
         check_ajax_referer( 'slswc_drm_' . $this->config['identifier'], 'nonce' );
@@ -445,65 +455,18 @@ class DRM {
     /**
      * Render shared notice styles (output once per page load).
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @return string
      */
     private function render_notice_styles() {
-        static $output = false;
-        if ( $output ) {
-            return '';
-        }
-        $output = true;
-
-        return '<style>
-.slswc-drm-notice.notice {
-    padding: 0 !important;
-    border-left: none !important;
-    position: relative !important;
-}
-.slswc-drm-notice__inner {
-    display: flex;
-    align-items: flex-start;
-    gap: 13px;
-    padding: 14px 48px 14px 16px;
-    border-left: 4px solid var(--slswc-n-color, #2271b1);
-}
-.slswc-drm-notice__icon {
-    flex-shrink: 0;
-    margin-top: 1px;
-    color: var(--slswc-n-color, #2271b1);
-    opacity: 0.85;
-}
-.slswc-drm-notice__content { flex: 1; min-width: 0; }
-.slswc-drm-notice__alert { color: var(--slswc-n-color, #2271b1); }
-.slswc-drm-notice__title {
-    font-size: 13.5px;
-    font-weight: 700;
-    color: #1d2327;
-    margin: 0 0 3px !important;
-    padding: 0 !important;
-    line-height: 1.4;
-}
-.slswc-drm-notice__desc {
-    font-size: 13px;
-    color: #50575e;
-    margin: 0 0 10px !important;
-    padding: 0 !important;
-    line-height: 1.5;
-}
-.slswc-drm-notice__actions {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px 14px;
-}
-</style>';
+        // Styles are now output via output_notice_styles() hooked to admin_head.
+        return '';
     }
 
     /**
      * Render the "no license" notice.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @param  string $state Current DRM state.
      * @param  string $nonce Nonce value.
      * @return string
@@ -522,14 +485,14 @@ class DRM {
 
         $title = ( 'grace_soft' === $state )
             /* translators: %s: product name */
-            ? sprintf( esc_html__( 'Did you forget to enter your %s license key?', 'slswcclient' ), $product_name )
+            ? sprintf( esc_html__( 'Did you forget to enter your %s license key?', 'slswc-client' ), $product_name )
             /* translators: %s: product name */
-            : '<span class="slswc-drm-notice__alert">' . esc_html__( 'Action required!', 'slswcclient' ) . '</span> ' . sprintf( esc_html__( 'Enter your %s license key to continue.', 'slswcclient' ), $product_name );
+            : '<span class="slswc-drm-notice__alert">' . esc_html__( 'Action required!', 'slswc-client' ) . '</span> ' . sprintf( esc_html__( 'Enter your %s license key to continue.', 'slswc-client' ), $product_name );
 
         $desc = '';
         if ( 'grace_soft' !== $state ) {
             $desc = '<p class="slswc-drm-notice__desc">'
-                . esc_html__( "Don't worry, your data is completely safe and premium features are still working. But you will need to enter a license key to continue using this product.", 'slswcclient' )
+                . esc_html__( "Don't worry, your data is completely safe and premium features are still working. But you will need to enter a license key to continue using this product.", 'slswc-client' )
                 . '</p>';
         }
 
@@ -543,8 +506,8 @@ class DRM {
             <p class="slswc-drm-notice__title">' . $title . '</p>
             ' . $desc . '
             <div class="slswc-drm-notice__actions">
-                <a href="' . $license_url . '" class="button button-primary">' . esc_html__( 'Enter License Key', 'slswcclient' ) . '</a>
-                <a href="' . $purchase_url . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Purchase a License', 'slswcclient' ) . '</a>
+                <a href="' . $license_url . '" class="button button-primary">' . esc_html__( 'Enter License Key', 'slswc-client' ) . '</a>
+                <a href="' . $purchase_url . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Purchase a License', 'slswc-client' ) . '</a>
             </div>
         </div>
     </div>
@@ -552,7 +515,7 @@ class DRM {
         data-notice-flag="' . esc_attr( $flag ) . '"
         data-nonce="' . esc_attr( $nonce ) . '"
         data-identifier="' . esc_attr( $this->config['identifier'] ) . '">
-        <span class="screen-reader-text">' . esc_html__( 'Dismiss this notice for 24 hours.', 'slswcclient' ) . '</span>
+        <span class="screen-reader-text">' . esc_html__( 'Dismiss this notice for 24 hours.', 'slswc-client' ) . '</span>
     </button>
 </div>';
     }
@@ -560,7 +523,7 @@ class DRM {
     /**
      * Render the "license expired" notice.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @param  string $nonce Nonce value.
      * @return string
      */
@@ -575,11 +538,14 @@ class DRM {
     <div class="slswc-drm-notice__inner">
         <svg class="slswc-drm-notice__icon" width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="3" y="8" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="12.5" r="1.25" fill="currentColor" opacity="0.7"/></svg>
         <div class="slswc-drm-notice__content">
-            <p class="slswc-drm-notice__title">' . sprintf( esc_html__( 'Your %s license has expired.', 'slswcclient' ), $product_name ) . '</p>
-            <p class="slswc-drm-notice__desc">' . esc_html__( 'Your data is safe and premium features continue to work. Renew your license to keep receiving automatic updates and priority support.', 'slswcclient' ) . '</p>
+            <p class="slswc-drm-notice__title">'
+            /* translators: %s: product name */
+            . sprintf( esc_html__( 'Your %s license has expired.', 'slswc-client' ), $product_name )
+            . '</p>
+            <p class="slswc-drm-notice__desc">' . esc_html__( 'Your data is safe and premium features continue to work. Renew your license to keep receiving automatic updates and priority support.', 'slswc-client' ) . '</p>
             <div class="slswc-drm-notice__actions">
-                <a href="' . $license_url . '" class="button button-primary">' . esc_html__( 'Enter License Now', 'slswcclient' ) . '</a>
-                <a href="' . $purchase_url . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Renew License', 'slswcclient' ) . '</a>
+                <a href="' . $license_url . '" class="button button-primary">' . esc_html__( 'Enter License Now', 'slswc-client' ) . '</a>
+                <a href="' . $purchase_url . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Renew License', 'slswc-client' ) . '</a>
             </div>
         </div>
     </div>
@@ -587,7 +553,7 @@ class DRM {
         data-notice-flag="' . esc_attr( $flag ) . '"
         data-nonce="' . esc_attr( $nonce ) . '"
         data-identifier="' . esc_attr( $this->config['identifier'] ) . '">
-        <span class="screen-reader-text">' . esc_html__( 'Dismiss this notice for 24 hours.', 'slswcclient' ) . '</span>
+        <span class="screen-reader-text">' . esc_html__( 'Dismiss this notice for 24 hours.', 'slswc-client' ) . '</span>
     </button>
 </div>';
     }
@@ -595,7 +561,7 @@ class DRM {
     /**
      * Render the "license disabled" notice.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @param  string $nonce Nonce value.
      * @return string
      */
@@ -610,11 +576,14 @@ class DRM {
     <div class="slswc-drm-notice__inner">
         <svg class="slswc-drm-notice__icon" width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="3" y="8" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="12.5" r="1.25" fill="currentColor" opacity="0.7"/></svg>
         <div class="slswc-drm-notice__content">
-            <p class="slswc-drm-notice__title">' . sprintf( esc_html__( 'Your %s license has been disabled.', 'slswcclient' ), $product_name ) . '</p>
-            <p class="slswc-drm-notice__desc">' . esc_html__( 'Please contact support or purchase a new license to re-enable updates and support.', 'slswcclient' ) . '</p>
+            <p class="slswc-drm-notice__title">'
+            /* translators: %s: product name */
+            . sprintf( esc_html__( 'Your %s license has been disabled.', 'slswc-client' ), $product_name )
+            . '</p>
+            <p class="slswc-drm-notice__desc">' . esc_html__( 'Please contact support or purchase a new license to re-enable updates and support.', 'slswc-client' ) . '</p>
             <div class="slswc-drm-notice__actions">
-                <a href="' . $license_url . '" class="button button-primary">' . esc_html__( 'Enter License Now', 'slswcclient' ) . '</a>
-                <a href="' . $purchase_url . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Purchase a License', 'slswcclient' ) . '</a>
+                <a href="' . $license_url . '" class="button button-primary">' . esc_html__( 'Enter License Now', 'slswc-client' ) . '</a>
+                <a href="' . $purchase_url . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Purchase a License', 'slswc-client' ) . '</a>
             </div>
         </div>
     </div>
@@ -622,7 +591,7 @@ class DRM {
         data-notice-flag="' . esc_attr( $flag ) . '"
         data-nonce="' . esc_attr( $nonce ) . '"
         data-identifier="' . esc_attr( $this->config['identifier'] ) . '">
-        <span class="screen-reader-text">' . esc_html__( 'Dismiss this notice for 24 hours.', 'slswcclient' ) . '</span>
+        <span class="screen-reader-text">' . esc_html__( 'Dismiss this notice for 24 hours.', 'slswc-client' ) . '</span>
     </button>
 </div>';
     }
@@ -630,7 +599,7 @@ class DRM {
     /**
      * Render the "license expiring soon" notice.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @param  string $nonce Nonce value.
      * @return string
      */
@@ -645,11 +614,14 @@ class DRM {
     <div class="slswc-drm-notice__inner">
         <svg class="slswc-drm-notice__icon" width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <div class="slswc-drm-notice__content">
-            <p class="slswc-drm-notice__title">' . sprintf( esc_html__( 'Your %s license is expiring soon.', 'slswcclient' ), $product_name ) . '</p>
-            <p class="slswc-drm-notice__desc">' . esc_html__( 'Renew your license to continue receiving automatic updates and priority support.', 'slswcclient' ) . '</p>
+            <p class="slswc-drm-notice__title">'
+            /* translators: %s: product name */
+            . sprintf( esc_html__( 'Your %s license is expiring soon.', 'slswc-client' ), $product_name )
+            . '</p>
+            <p class="slswc-drm-notice__desc">' . esc_html__( 'Renew your license to continue receiving automatic updates and priority support.', 'slswc-client' ) . '</p>
             <div class="slswc-drm-notice__actions">
-                <a href="' . $license_url . '" class="button button-primary">' . esc_html__( 'View License', 'slswcclient' ) . '</a>
-                <a href="' . $purchase_url . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Renew License', 'slswcclient' ) . '</a>
+                <a href="' . $license_url . '" class="button button-primary">' . esc_html__( 'View License', 'slswc-client' ) . '</a>
+                <a href="' . $purchase_url . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Renew License', 'slswc-client' ) . '</a>
             </div>
         </div>
     </div>
@@ -657,7 +629,7 @@ class DRM {
         data-notice-flag="' . esc_attr( $flag ) . '"
         data-nonce="' . esc_attr( $nonce ) . '"
         data-identifier="' . esc_attr( $this->config['identifier'] ) . '">
-        <span class="screen-reader-text">' . esc_html__( 'Dismiss this notice for 24 hours.', 'slswcclient' ) . '</span>
+        <span class="screen-reader-text">' . esc_html__( 'Dismiss this notice for 24 hours.', 'slswc-client' ) . '</span>
     </button>
 </div>';
     }
@@ -665,7 +637,7 @@ class DRM {
     /**
      * Output the shared dismiss script for all DRM notices.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     private function output_dismiss_script() {
         static $output = false;
@@ -691,42 +663,42 @@ class DRM {
     }
 
     // -------------------------------------------------------------------------
-    // Rendering: Interstitial
+    // Rendering: Shared styles / helpers
     // -------------------------------------------------------------------------
 
     /**
-     * Render the full-page interstitial lock.
+     * Output admin-notice CSS once per page load (hooked to admin_head).
      *
-     * @since  1.2.0
+     * @since 1.0.0
+     */
+    public function output_notice_styles() {
+        static $output = false;
+        if ( $output ) {
+            return;
+        }
+        $output = true;
+        ?>
+        <style>
+        .slswc-drm-notice.notice { padding: 0 !important; border-left: none !important; position: relative !important; }
+        .slswc-drm-notice__inner { display: flex; align-items: flex-start; gap: 13px; padding: 14px 48px 14px 16px; border-left: 4px solid var(--slswc-n-color, #2271b1); }
+        .slswc-drm-notice__icon { flex-shrink: 0; margin-top: 1px; color: var(--slswc-n-color, #2271b1); }
+        .slswc-drm-notice__content { flex: 1; min-width: 0; }
+        .slswc-drm-notice__title { margin: 0 0 4px; font-weight: 600; font-size: 13px; color: #1d2327; line-height: 1.5; }
+        .slswc-drm-notice__desc { margin: 0 0 8px; font-size: 13px; color: #50575e; line-height: 1.6; }
+        .slswc-drm-notice__alert { color: #b91c1c; }
+        .slswc-drm-notice__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; }
+        .slswc-drm-notice__actions a { font-size: 13px; }
+        </style>
+        <?php
+    }
+
+    /**
+     * Return the interstitial card CSS wrapped in a style tag.
+     *
+     * @since  1.0.0
      * @return string
      */
-    private function render_interstitial() {
-        $slug           = $this->config['identifier'];
-        $product_name   = esc_html( $this->config['product_name'] );
-        $license_status = $this->get_license_status();
-        $license_url    = esc_url( $this->config['license_page_url'] );
-        $purchase_url   = esc_url( $this->config['purchase_url'] );
-        $logo_url       = esc_url( $this->config['logo_url'] );
-        $nonce          = esc_attr( wp_create_nonce( 'slswc_drm_' . $slug ) );
-
-        $status_labels = array(
-            'expired'                        => __( 'expired', 'slswcclient' ),
-            'disabled'                       => __( 'disabled', 'slswcclient' ),
-            'inactive'                       => __( 'inactive', 'slswcclient' ),
-            'invalid'                        => __( 'invalid', 'slswcclient' ),
-            'max_activations'                => __( 'at its activation limit', 'slswcclient' ),
-            'max_staging_activations_reached' => __( 'at its staging limit', 'slswcclient' ),
-        );
-
-        $status_label = isset( $status_labels[ $license_status ] )
-            ? esc_html( $status_labels[ $license_status ] )
-            : esc_html__( 'missing', 'slswcclient' );
-
-        $logo_html = '';
-        if ( ! empty( $this->config['logo_url'] ) ) {
-            $logo_html = '<img src="' . $logo_url . '" alt="' . $product_name . '" class="slswc-drm-card__logo">';
-        }
-
+    private function render_interstitial_styles() {
         return '<style>
 .slswc-drm-card {
     margin: 48px auto;
@@ -822,16 +794,139 @@ class DRM {
 @media (max-width: 600px) {
     .slswc-drm-card__inner { padding: 32px 24px 28px; }
 }
-</style>
+</style>';
+    }
 
-<div class="slswc-drm-card">
+    /**
+     * Return the interstitial card JS wrapped in a script tag.
+     *
+     * All user-visible strings are escaped with esc_js().
+     *
+     * @since  1.0.0
+     * @return string
+     */
+    private function render_interstitial_script() {
+        return '<script>
+jQuery(function($){
+    $("#slswc-drm-refresh").on("click", function(){
+        var $label = $("#slswc-drm-refresh-label");
+        $label.text("' . esc_js( __( 'Checking...', 'slswc-client' ) ) . '");
+        $.post(ajaxurl, {
+            action: "slswc_drm_refresh_status_" + $(this).data("identifier"),
+            nonce: $(this).data("nonce")
+        }, function(response){
+            if (response.success && "ok" === response.data.state) {
+                $("#slswc-drm-refresh-msg")
+                    .css("color", "#15803d")
+                    .text("' . esc_js( __( 'License activated! Reloading...', 'slswc-client' ) ) . '")
+                    .show();
+                setTimeout(function(){ window.location.reload(); }, 1500);
+            } else {
+                $label.text("' . esc_js( __( 'I already entered my license - refresh status', 'slswc-client' ) ) . '");
+                $("#slswc-drm-refresh-msg")
+                    .css("color", "#b91c1c")
+                    .text("' . esc_js( __( 'License still invalid. Please enter a valid license key.', 'slswc-client' ) ) . '")
+                    .show();
+            }
+        });
+    });
+});
+</script>';
+    }
+
+    /**
+     * Allowed HTML tags/attributes for wp_kses() on DRM notice and interstitial markup.
+     *
+     * Extends the 'post' allowed-HTML set with SVG tags needed for inline icons.
+     *
+     * @since  1.0.0
+     * @return array
+     */
+    private function allowed_notice_tags() {
+        $allowed   = wp_kses_allowed_html( 'post' );
+        $svg_attrs = array(
+            'xmlns'           => true,
+            'width'           => true,
+            'height'          => true,
+            'viewbox'         => true,
+            'fill'            => true,
+            'stroke'          => true,
+            'stroke-width'    => true,
+            'stroke-linecap'  => true,
+            'stroke-linejoin' => true,
+            'opacity'         => true,
+            'rx'              => true,
+            'ry'              => true,
+            'cx'              => true,
+            'cy'              => true,
+            'r'               => true,
+            'x'               => true,
+            'y'               => true,
+            'x1'              => true,
+            'y1'              => true,
+            'x2'              => true,
+            'y2'              => true,
+            'd'               => true,
+            'transform'       => true,
+            'gradientunits'   => true,
+            'offset'          => true,
+            'stop-color'      => true,
+            'aria-hidden'     => true,
+            'class'           => true,
+            'id'              => true,
+            'style'           => true,
+        );
+        foreach ( array( 'svg', 'path', 'circle', 'rect', 'ellipse', 'defs', 'lineargradient', 'stop' ) as $tag ) {
+            $allowed[ $tag ] = $svg_attrs;
+        }
+        return $allowed;
+    }
+
+    // -------------------------------------------------------------------------
+    // Rendering: Interstitial
+    // -------------------------------------------------------------------------
+
+    /**
+     * Render the full-page interstitial lock HTML (no CSS, no JS).
+     *
+     * @since  1.0.0
+     * @return string
+     */
+    private function render_interstitial_html() {
+        $slug           = $this->config['identifier'];
+        $product_name   = esc_html( $this->config['product_name'] );
+        $license_status = $this->get_license_status();
+        $license_url    = esc_url( $this->config['license_page_url'] );
+        $purchase_url   = esc_url( $this->config['purchase_url'] );
+        $logo_url       = esc_url( $this->config['logo_url'] );
+        $nonce          = esc_attr( wp_create_nonce( 'slswc_drm_' . $slug ) );
+
+        $status_labels = array(
+            'expired'                         => __( 'expired', 'slswc-client' ),
+            'disabled'                        => __( 'disabled', 'slswc-client' ),
+            'inactive'                        => __( 'inactive', 'slswc-client' ),
+            'invalid'                         => __( 'invalid', 'slswc-client' ),
+            'max_activations'                 => __( 'at its activation limit', 'slswc-client' ),
+            'max_staging_activations_reached' => __( 'at its staging limit', 'slswc-client' ),
+        );
+
+        $status_label = isset( $status_labels[ $license_status ] )
+            ? esc_html( $status_labels[ $license_status ] )
+            : esc_html__( 'missing', 'slswc-client' );
+
+        $logo_html = '';
+        if ( ! empty( $this->config['logo_url'] ) ) {
+            $logo_html = '<img src="' . $logo_url . '" alt="' . $product_name . '" class="slswc-drm-card__logo">';
+        }
+
+        return '<div class="slswc-drm-card">
     <div class="slswc-drm-card__inner">
         ' . $logo_html . '
         <h2 class="slswc-drm-card__heading">
-            <span class="slswc-drm-card__heading-urgent">' . esc_html__( 'Urgent!', 'slswcclient' ) . '</span>
+            <span class="slswc-drm-card__heading-urgent">' . esc_html__( 'Urgent!', 'slswc-client' ) . '</span>
             ' . sprintf(
                 /* translators: 1: product name, 2: license status label */
-                esc_html__( ' Your %1$s license is %2$s!', 'slswcclient' ),
+                esc_html__( ' Your %1$s license is %2$s!', 'slswc-client' ),
                 $product_name,
                 $status_label
             ) . '
@@ -840,7 +935,7 @@ class DRM {
         <p class="slswc-drm-card__body">
             ' . sprintf(
                 /* translators: %s: product name */
-                esc_html__( 'Without an active license, your site will continue to operate normally, but access to %s settings and admin pages has been disabled until a valid license is entered.', 'slswcclient' ),
+                esc_html__( 'Without an active license, your site will continue to operate normally, but access to %s settings and admin pages has been disabled until a valid license is entered.', 'slswc-client' ),
                 $product_name
             ) . '
         </p>
@@ -885,48 +980,21 @@ class DRM {
         </svg>
 
         <a href="' . $license_url . '" class="slswc-drm-card__cta">
-            ' . esc_html__( 'Enter License Now', 'slswcclient' ) . '
+            ' . esc_html__( 'Enter License Now', 'slswc-client' ) . '
         </a>
 
         <a href="' . $purchase_url . '" target="_blank" rel="noopener noreferrer" class="slswc-drm-card__purchase">
-            ' . esc_html__( "Don't have a license yet? Purchase here.", 'slswcclient' ) . '
+            ' . esc_html__( "Don't have a license yet? Purchase here.", 'slswc-client' ) . '
         </a>
 
         <button type="button" id="slswc-drm-refresh" class="slswc-drm-card__refresh"
             data-nonce="' . $nonce . '" data-identifier="' . esc_attr( $slug ) . '">
-            <span id="slswc-drm-refresh-label">' . esc_html__( 'I already entered my license - refresh status', 'slswcclient' ) . '</span>
+            <span id="slswc-drm-refresh-label">' . esc_html__( 'I already entered my license - refresh status', 'slswc-client' ) . '</span>
         </button>
 
         <p id="slswc-drm-refresh-msg"></p>
     </div>
-</div>
-
-<script>
-jQuery(function($){
-    $("#slswc-drm-refresh").on("click", function(){
-        var $label = $("#slswc-drm-refresh-label");
-        $label.text("' . esc_js( __( 'Checking...', 'slswcclient' ) ) . '");
-        $.post(ajaxurl, {
-            action: "slswc_drm_refresh_status_" + $(this).data("identifier"),
-            nonce: $(this).data("nonce")
-        }, function(response){
-            if (response.success && "ok" === response.data.state) {
-                $("#slswc-drm-refresh-msg")
-                    .css("color", "#15803d")
-                    .text("' . esc_js( __( 'License activated! Reloading...', 'slswcclient' ) ) . '")
-                    .show();
-                setTimeout(function(){ window.location.reload(); }, 1500);
-            } else {
-                $label.text("' . esc_js( __( 'I already entered my license - refresh status', 'slswcclient' ) ) . '");
-                $("#slswc-drm-refresh-msg")
-                    .css("color", "#b91c1c")
-                    .text("' . esc_js( __( 'License still invalid. Please enter a valid license key.', 'slswcclient' ) ) . '")
-                    .show();
-            }
-        });
-    });
-});
-</script>';
+</div>';
     }
 
     // -------------------------------------------------------------------------
@@ -936,7 +1004,7 @@ jQuery(function($){
     /**
      * Get the current license status from the updater's license details.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @return string
      */
     private function get_license_status() {
@@ -946,7 +1014,7 @@ jQuery(function($){
     /**
      * Build the option key for a DRM-specific option.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @param  string $suffix Option name suffix.
      * @return string
      */
@@ -957,7 +1025,7 @@ jQuery(function($){
     /**
      * Multisite-aware option getter.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @param  string $option   Option name.
      * @param  mixed  $fallback Default value.
      * @return mixed
@@ -971,7 +1039,7 @@ jQuery(function($){
     /**
      * Multisite-aware option setter.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @param  string $option Option name.
      * @param  mixed  $value  Value to store.
      */
@@ -986,7 +1054,7 @@ jQuery(function($){
     /**
      * Get the DRM config.
      *
-     * @since  1.2.0
+     * @since  1.0.0
      * @return array
      */
     public function get_config() {

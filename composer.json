@@ -1,40 +1,28 @@
 {
     "name": "slswc/client",
-    "description": "Software License Server for WooCommerce",
+    "description": "SDK for WordPress plugins and themes to check updates, manage licenses, and enforce DRM against an SLSWC-powered license server.",
     "license": "GPL-2.0-or-later",
     "version": "1.1.1",
     "keywords": [
         "wordpress",
-        "plugin"
+        "licensing",
+        "updates",
+        "sdk"
     ],
-    "type": "wordpress-plugin",
+    "type": "library",
     "authors": [
         {
-            "name": "Jamie Madden",
+            "name": "Lindeni Mahlalela",
             "email": "support@licenseserver.io"
         }
     ],
-    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "SLSWC\\Client\\": "src/",
-            "SLSWC\\Client\\Updater\\": "src/Updater/"
+            "SLSWC\\Client\\": "src/"
         }
     },
-    "require-dev": {
-        "mockery/mockery": "^1.5",
-        "phpstan/phpstan": "^1.10"
+    "require": {
+        "php": ">=7.4"
     },
-    "prefer-stable" : true,
-    "scripts": {
-        "fix": "./vendor/bin/phpcbf --warning-severity=0 -s --ignore-annotations --extensions=php,html ./src",
-        "lint": "./vendor/bin/phpcs --warning-severity=0 -s --ignore-annotations --extensions=php,html ./src",
-        "phptest": "./vendor/bin/phpcs -p ./src --standard=PHPCompatibility --runtime-set testVersion 5.3-8.0 --report-full=./reports/php-compatibility.html",
-        "analyze": "vendor/bin/phpstan analyse ./src ./partials ./sample_products"
-    },
-    "config": {
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        }
-    }
+    "prefer-stable": true
 }

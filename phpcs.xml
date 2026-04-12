@@ -1,147 +1,33 @@
 <?xml version="1.0"?>
-<ruleset name="WCVendors-WordPress-Default">
-    <description>A base ruleset that all other WC Vendors WordPress rule sets should extend.</description>
+<ruleset name="SLSWC Client">
+	<description>Coding standards for SLSWC Client</description>
 
-    <!-- Args -->
-    <arg name="basepath" value="."/>
-    <arg value="ps"/>
-    <arg name="colors"/>
-	<arg name="extensions" value="php"/>
-    <!-- Run parallel processing to speed up checking -->
-	<arg name="parallel" value="6"/>  
+	<file>./src</file>
 
-    <!-- Exclude paths -->
-    <exclude-pattern>*/languages/*</exclude-pattern>
-    <exclude-pattern>*/phpunit.xml*</exclude-pattern>
-    <exclude-pattern>*/tests/*</exclude-pattern>
-    <exclude-pattern>includes/deprecated-functions.php</exclude-pattern>
-    <exclude-pattern>includes/deprecated-classes.php</exclude-pattern>
-    <exclude-pattern>assets/*</exclude-pattern>
-    <exclude-pattern>vendor</exclude-pattern>
+	<arg value="sp"/>
+	<arg name="colors"/>
+	<arg name="parallel" value="75"/>
 
-    <!-- Third-party code -->
-    <exclude-pattern>*/bower-components/*</exclude-pattern>
-    <exclude-pattern>*/node_modules/*</exclude-pattern>
-    <exclude-pattern type="relative">^/vendor/*</exclude-pattern>
+	<rule ref="WordPress-Core">
+		<!-- Use spaces instead of tabs -->
+		<exclude name="WordPress.WhiteSpace.ControlStructureSpacing.NoSpaceBetweenStructureColon"/>
+		<exclude name="Generic.WhiteSpace.DisallowSpaceIndent.SpacesUsed"/>
+	</rule>
 
-    <!-- Configs -->
-    <config name="minimum_supported_wp_version" value="6.0" />
-    <config name="testVersion" value="8.1-" />  
+	<!-- Enforce space-based indentation -->
+	<rule ref="Generic.WhiteSpace.DisallowTabIndent"/>
+	<rule ref="Squiz.WhiteSpace.SuperfluousWhitespace"/>
 
-    <!-- Check for PHP cross-version compatibility. -->
-	<config name="testVersion" value="8.1-"/>
-	<rule ref="PHPCompatibilityWP"/>
+	<!-- Allow snake_case method names (WordPress convention) -->
+	<rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
+		<severity>0</severity>
+	</rule>
 
-    <!-- Don't worry about files that don't contain any code -->
-    <rule ref="Internal.NoCodeFound">
-        <severity>0</severity>
-    </rule>
-
-    <!-- Ignore mixed line-endings warnings -->
-    <rule ref="Internal.LineEndings.Mixed">
-        <severity>0</severity>
-    </rule>
-
-    <!-- Internal exceptions (often occur on minified files) -->
-    <rule ref="Internal.Tokenizer.Exception">
-        <severity>0</severity>
-    </rule>
-
-    <!-- For CI, don't fail on warnings -->
-    <config name="ignore_warnings_on_exit" value="1" />
-
-    <!-- Enforce doc standards -->
-    <rule ref="WordPress-Docs">
-        <!-- Don't worry about capitalizing long lines -->
-        <exclude name="Generic.Commenting.DocComment.LongNotCapital" />
-
-        <!-- Dont need to capitalize first letter -->
-        <exclude name="Generic.Commenting.DocComment.ShortNotCapital" />
-
-        <!-- Don't worry about mission document comments -->
-        <exclude name="Generic.Commenting.FileComment.Missing" />
-    </rule>
-
-    <rule ref="WordPress-Extra">
-        <!-- Forget about file names -->
-        <exclude name="WordPress.Files.FileName" />
-
-        <!-- Allow same line control structures e.g. if ( true ) { echo 1; } -->
-        <exclude name="Squiz.ControlStructures.ControlSignature.NewlineAfterOpenBrace" />
-
-        <!-- Don't require punctuation after inline comments -->
-        <exclude name="Squiz.Commenting.InlineComment.InvalidEndChar" />
-
-        <!-- Allow empty catch statements -->
-        <exclude name="Generic.CodeAnalysis.EmptyStatement.DetectedCatch" />
-
-        <!-- Comment punctuation doesn't matter -->
-        <exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop" />
-        <exclude name="Squiz.Commenting.FunctionComment.ThrowsNoFullStop" />
-
-        <!-- Allow shorthand array syntax -->
-        <exclude name="Generic.Arrays.DisallowShortArraySyntax.Found" />
-
-        <!-- Allow WP global modification -->
-        <exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited" />
-
-        <!-- This nonce sniff almost never works right -->
-        <exclude name="WordPress.Security.NonceVerification.Missing" />
-    </rule>
-
-    <!-- Sets the minimum supported WP version to 4.7, which is over a year old. -->
-    <config name="minimum_supported_wp_version" value="4.7" />
-
-    <!-- Make missing translator comment a warning. -->
-    <rule ref="WordPress.WP.I18n.MissingTranslatorsComment">
-        <type>warning</type>
-    </rule>
-
-    <!-- Sometimes we need to override globals -->
-    <rule ref="WordPress.WP.GlobalVariablesOverride.OverrideProhibited">
-        <type>warning</type>
-    </rule>
-
-    <!-- Make sure we always exit after a redirect -->
-    <rule ref="WordPressVIPMinimum.Security.ExitAfterRedirect" />
-
-    <!-- Make sure that the proper escaping functions are being used -->
-    <rule ref="WordPressVIPMinimum.Security.ProperEscapingFunction" />
-
-    <rule ref="WordPress">
-        <exclude name="Generic.WhiteSpace.DisallowSpaceIndent" />
-        <exclude name="WordPress.Files.FileName.InvalidClassFileName" />
-        <exclude name="WordPress.WhiteSpace.ControlStructureSpacing.NoSpaceBetweenStructureColon" />
-        <!-- <exclude name="WordPress.PHP.YodaConditions.NotYoda" /> -->
-        <exclude name="WordPress.PHP.DisallowShortTernary.Found" />
-    </rule>
-
-    <rule ref="Generic.WhiteSpace.ScopeIndent">
-        <properties>
-            <property name="indent" value="4" />
-            <property name="tabIndent" value="false" />
-        </properties>
-    </rule>
-
-    <rule ref="Generic.WhiteSpace.DisallowTabIndent" />
-    <!--<rule ref="Generic.Arrays.DisallowLongArraySyntax" />
-    <rule ref="Generic.ControlStructures.DisallowYodaConditions" />-->
-
-    <rule ref="WordPress.WhiteSpace.ControlStructureSpacing">
-        <properties>
-            <property name="blank_line_check" value="true" />
-        </properties>
-    </rule>
-
-    <rule ref="Squiz.ControlStructures.ControlSignature">
-        <properties>
-            <property name="requiredSpacesBeforeColon" value="0" />
-        </properties>
-    </rule>
-
-    <!-- Loads the PHP Compatibility ruleset. -->
-    <rule ref="PHPCompatibilityWP" />
-
-    <!-- PHP version check. -->
-    <config name="testVersion" value="7.3-" />
+	<!-- Allow class files that don't match class name -->
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<severity>0</severity>
+	</rule>
+	<rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+		<severity>0</severity>
+	</rule>
 </ruleset>

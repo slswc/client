@@ -86,3 +86,6 @@ reports
 
 # Language files
 *.pot
+
+
+.claude

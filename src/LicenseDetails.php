@@ -2,8 +2,8 @@
 /**
  * Define the license details class
  *
- * @version 1.0.2
- * @since   1.0.2
+ * @version 1.0.0
+ * @since   1.0.0
  *
  * @package SLSWC_CLient
  */
@@ -13,16 +13,16 @@ namespace SLSWC\Client;
 /**
  * License details class.
  *
- * @version 1.0.2
- * @since   1.0.2
+ * @version 1.0.0
+ * @since   1.0.0
  */
 class LicenseDetails {
     /**
      * License server URL
      *
      * @var string
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public $license_server_url;
 
@@ -30,8 +30,8 @@ class LicenseDetails {
      * The option key for saving license details.
      *
      * @var string
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public $option_name = '';
 
@@ -39,8 +39,8 @@ class LicenseDetails {
      * The Client object.
      *
      * @var ApiClient
-     * @version 1.0.2
-     * @since   1.0.2
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public $client;
 
@@ -48,8 +48,8 @@ class LicenseDetails {
      * Plugin file
      *
      * @var string
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public $plugin_file;
 
@@ -57,8 +57,8 @@ class LicenseDetails {
      * The license details
      *
      * @var array
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public $license_details = array();
 
@@ -68,8 +68,8 @@ class LicenseDetails {
      * @param string $license_server_url The license server url.
      * @param string $plugin_file        The plugin file.
      * @param array  $license_details    The plugin details.
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function __construct( $license_server_url, $plugin_file, $license_details = array() ) {
         $this->plugin_file        = $plugin_file;
@@ -108,43 +108,12 @@ class LicenseDetails {
      * Methods for getting object properties.
      */
     /**
-     * Check if staging activated
-     *
-     * @param string $environment environment to get status.
-     * @return boolean
-     */
-    public function get_active_status( $environment ) {
-        $options = $this->license_details;
-        if ( ! isset( $options['active_status'] ) ) {
-            $options['active_status'] = array(
-                'live'    => false,
-                'staging' => false,
-            );
-        }
-
-        if ( ! $environment ) {
-            return false;
-        }
-
-        $active_status = $options['active_status'][ $environment ];
-
-        return is_bool( $active_status )
-            ? $active_status
-            : (
-                'yes' === strtolower( $active_status )
-                || 1 === $active_status
-                || 'true' === strtolower( $active_status )
-                || '1' === $active_status
-            );
-    }
-
-    /**
      * Get default license options.
      *
      * @param array $args Options to override the defaults.
      * @return  array
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     * @version 1.1.0
+     * @since   1.0.0
+     * @version 1.0.0
      */
     public function get_default_license_details( $args = array() ) {
         $default_options = array(
@@ -154,11 +123,6 @@ class LicenseDetails {
             'license_key'     => '',
             'license_expires' => '',
             'current_version' => '',
-            'environment'     => '',
-            'active_status'   => array(
-                'live'    => 'no',
-                'staging' => 'no',
-            ),
         );
 
         if ( ! empty( $args ) ) {
@@ -174,8 +138,8 @@ class LicenseDetails {
      * @param array $license_details The license details.
      *
      * @return void
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function set_license_details( $license_details ) {
         $this->set_domain( $license_details['domain'] );
@@ -183,15 +147,14 @@ class LicenseDetails {
         $this->set_license_key( $license_details['license_key'] );
         $this->set_license_expires( $license_details['license_expires'] );
         $this->set_current_version( $license_details['version'] );
-        $this->set_active_status( $license_details['active_status'] );
     }
 
     /**
      * Get the option name.
      *
      * @return array
-     * @version 1.1.0
-     * @since   1.1.0
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function get_option_name() {
         return apply_filters(
@@ -204,8 +167,8 @@ class LicenseDetails {
      * Get the domain
      *
      * @return string
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function get_domain() {
         return $this->license_details['domain'];
@@ -214,8 +177,8 @@ class LicenseDetails {
     /**
      * Get the license status.
      *
-     * @since 1.1.0
-     * @version 1.1.0
+     * @since 1.0.0
+     * @version 1.0.0
      */
     public function get_license_status() {
         return $this->license_details['license_status'];
@@ -224,8 +187,8 @@ class LicenseDetails {
     /**
      * Get the license key
      *
-     * @since 1.1.0
-     * @version 1.1.0
+     * @since 1.0.0
+     * @version 1.0.0
      */
     public function get_license_key() {
         return $this->license_details['license_key'];
@@ -235,30 +198,19 @@ class LicenseDetails {
     /**
      * Get the license expiry
      *
-     * @since 1.1.0
-     * @version 1.1.0
+     * @since 1.0.0
+     * @version 1.0.0
      */
     public function get_license_expires() {
         return $this->license_details['license_expires'];
     }
 
     /**
-     * Get the environment
-     *
-     * @return string
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     */
-    public function get_environment() {
-        return $this->license_details['environment'];
-    }
-
-    /**
      * Get the current version
      *
      * @return string
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function get_current_version() {
         return $this->license_details['version'];
@@ -268,8 +220,8 @@ class LicenseDetails {
      * Get the license details.
      *
      * @return array
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function get_license_details() {
         return $this->license_details;
@@ -288,8 +240,8 @@ class LicenseDetails {
      *
      * @param string $domain The domain to set.
      * @return void
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function set_domain( $domain ) {
         $this->license_details['domain'] = $domain;
@@ -298,8 +250,8 @@ class LicenseDetails {
     /**
      * Set the license status
      *
-     * @since 1.1.0
-     * @version 1.1.0
+     * @since 1.0.0
+     * @version 1.0.0
      * @param string $license_status license status.
      */
     public function set_license_status( $license_status ) {
@@ -309,8 +261,8 @@ class LicenseDetails {
     /**
      * Set the license key
      *
-     * @since 1.1.0
-     * @version 1.1.0
+     * @since 1.0.0
+     * @version 1.0.0
      * @param string $license_key License key.
      */
     public function set_license_key( $license_key ) {
@@ -320,8 +272,8 @@ class LicenseDetails {
     /**
      * Set the license expires.
      *
-     * @since 1.1.0
-     * @version 1.1.0
+     * @since 1.0.0
+     * @version 1.0.0
      * @param string $license_expires License expiry date.
      */
     public function set_license_expires( $license_expires ) {
@@ -333,23 +285,11 @@ class LicenseDetails {
      *
      * @param string $version The version to set.
      * @return void
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function set_current_version( $version ) {
         $this->license_details['version'] = $version;
-    }
-
-    /**
-     * Set the environment
-     *
-     * @param string $environment The environment to set.
-     * @return void
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     */
-    public function set_environment( $environment ) {
-        $this->license_details['environment'] = $environment;
     }
 
     /**
@@ -357,31 +297,19 @@ class LicenseDetails {
      *
      * @param string $option_name The name of the option.
      * @return void
-     * @version 1.1.0
-     * @since   1.1.0 - Added.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function set_option_name( $option_name ) {
         $this->option_name = $option_name;
     }
 
     /**
-     * Set the active status
-     *
-     * @param array $active_status The active status to set.
-     * @return void
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     */
-    public function set_active_status( $active_status ) {
-        $this->license_details['active_status'] = $active_status;
-    }
-
-    /**
      * Save the license details.
      *
      * @return void
-     * @version 1.1.0
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function save() {
         update_option( $this->get_option_name(), $this->license_details );
@@ -396,11 +324,13 @@ class LicenseDetails {
     /**
      * Validate the license is active and if not, set the status and return false
      *
-     * @since 1.1.0
+     * @since 1.0.0
      * @param object $response_body Response body.
      */
     public function check_license( $response_body ) {
-        $status = is_array( $response_body ) ? $response_body['status'] : $response_body->status;
+        $status = is_array( $response_body )
+            ? ( $response_body['status'] ?? '' )
+            : ( isset( $response_body->status ) ? $response_body->status : '' );
 
         if ( 'active' === $status || 'expiring' === $status ) {
             return true;
@@ -408,7 +338,10 @@ class LicenseDetails {
 
         if ( ! is_numeric( $status ) ) {
             $this->set_license_status( $status );
-            $this->set_license_expires( $response_body->expires );
+            $expires = is_array( $response_body )
+                ? ( $response_body['expires'] ?? '' )
+                : ( isset( $response_body->expires ) ? $response_body->expires : '' );
+            $this->set_license_expires( $expires );
             $this->save();
         }
 
@@ -416,32 +349,10 @@ class LicenseDetails {
     }
 
     /**
-     * The available license status types.
-     *
-     * @since 1.1.0
-     * @version 1.1.0
-     */
-    public function license_status_types() {
-        return apply_filters(
-            'slswc_license_status_types',
-            array(
-                'valid'           => __( 'Valid', 'slswcclient' ),
-                'deactivated'     => __( 'Deactivated', 'slswcclient' ),
-                'max_activations' => __( 'Max Activations reached', 'slswcclient' ),
-                'invalid'         => __( 'Invalid', 'slswcclient' ),
-                'inactive'        => __( 'Inactive', 'slswcclient' ),
-                'active'          => __( 'Active', 'slswcclient' ),
-                'expiring'        => __( 'Expiring', 'slswcclient' ),
-                'expired'         => __( 'Expired', 'slswcclient' ),
-            )
-        );
-    }
-
-    /**
      * Validate the license key information sent from the form.
      *
-     * @since   1.1.0 - Refactored into classes and converted into a composer package.
-     * @version 1.0.2
+     * @since   1.0.0
+     * @version 1.0.0
      * @param array $input the input passed from the request.
      */
     public function validate_license( $input = array() ) {
@@ -454,22 +365,15 @@ class LicenseDetails {
             $this->license_details = $license;
         }
 
-        $environment   = isset( $license['environment'] ) ? $license['environment'] : '';
-        $active_status = $this->get_active_status( $environment );
-
         $this->license_details['license_key'] = isset( $input['license_key'] )
             ? $input['license_key']
             : $this->get_license_key();
         $license                              = wp_parse_args( $input, $license );
 
-        Helper::log( "Validate license:: key={$license['license_key']}, environment=$environment, status=$active_status" );
+        Helper::log( "Validate license:: key={$license['license_key']}" );
 
         $response = null;
         $action   = array_key_exists( 'deactivate_license', $input ) ? 'deactivate' : 'activate';
-
-        if ( $active_status && 'activate' === $action ) {
-            $this->set_license_status( 'active' );
-        }
 
         $this->set_license_details( $license );
 
@@ -490,7 +394,7 @@ class LicenseDetails {
         if ( is_null( $response ) ) {
             $message = __(
                 'Error: Your license might be invalid or there was an unknown error on the license server. Please try again and contact support if this issue persists.',
-                'slswcclient'
+                'slswc-client'
             );
 
             $this->set_license_status( 'invalid' );
@@ -518,18 +422,10 @@ class LicenseDetails {
 
         $_license_key = isset( $input['license_key'] ) ? $input['license_key'] : $this->get_license_key();
 
-        $is_activating = 'activate' === $action;
-        $is_active     = 'active' === $response->domain->status;
-
-        $_active_status = $license['active_status'];
-
-        $_active_status[ $environment ] = $is_activating && $is_active ? 'yes' : 'no';
-
         $this->set_license_key( $_license_key );
         $this->set_license_status( $response->domain->status );
-        $this->set_domain( $response->domain );
+        $this->set_domain( is_object( $response->domain ) ? $response->domain->domain : $response->domain );
         $this->set_license_expires( $response->expires );
-        $this->set_active_status( $_active_status );
 
         $domain_status = $response->domain->status;
 
@@ -556,27 +452,27 @@ class LicenseDetails {
      * @param string $action          The action taken. activate or deactivate.
      * @param string $response_status The response status.
      * @return string
-     * @version 1.1.0
-     * @since   1.1.0
+     * @version 1.0.0
+     * @since   1.0.0
      */
     public function get_status_message( $domain_status, $action, $response_status ) {
-        $messages = $this->license_status_types();
+        $messages = Helper::license_status_types();
 
         switch ( $action ) {
             case 'activate':
                 return 'active' === $domain_status
-                    ? __( 'License activated.', 'slswcclient' )
+                    ? __( 'License activated.', 'slswc-client' )
                     : sprintf(
                         // translators: %s is the license error message.
-                        __( 'Failed to activate license. %s', 'slswcclient' ),
+                        __( 'Failed to activate license. %s', 'slswc-client' ),
                         $messages[ $domain_status ]
                     );
             case 'deactivate':
                 return 'deactivated' === $domain_status
-                    ? __( 'License Deactivated', 'slswcclient' )
+                    ? __( 'License Deactivated', 'slswc-client' )
                     : sprintf(
                         // translators: %s - The message describing the license status.
-                        __( 'Unable to deactivate license. Please deactivate on the store. %s', 'slswcclient' ),
+                        __( 'Unable to deactivate license. Please deactivate on the store. %s', 'slswc-client' ),
                         $messages[ $domain_status ]
                     );
             default:

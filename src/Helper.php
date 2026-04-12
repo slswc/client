@@ -22,35 +22,6 @@ use DateTimeZone;
  */
 class Helper {
     /**
-     * Check if the account is connected to the api
-     *
-     * @return  boolean
-     * @since   1.0.0
-     * @version 1.0.0
-     */
-    public static function is_connected() {
-        $is_connected = get_option( 'slswc_api_connected', 'no' );
-        return 'yes' === $is_connected ? true : false;
-    }
-
-    /**
-     * Get the API Keys stored in database
-     *
-     * @return  array
-     * @since   1.0.0
-     * @version 1.0.0
-     */
-    public static function get_api_keys() {
-        return array_filter(
-            array(
-                'username'        => get_option( 'slswc_api_username', '' ),
-                'consumer_key'    => get_option( 'slswc_consumer_key', '' ),
-                'consumer_secret' => get_option( 'slswc_consumer_secret', '' ),
-            )
-        );
-    }
-
-    /**
      * Get file information
      *
      * @param string $base_file     The base file.
@@ -77,6 +48,14 @@ class Helper {
      * @version 1.0.0
      */
     public static function get_file_information( $base_file, $type = 'plugin' ) {
+        static $cache = array();
+
+        $cache_key = $type . '::' . $base_file;
+
+        if ( isset( $cache[ $cache_key ] ) ) {
+            return $cache[ $cache_key ];
+        }
+
         $data = array();
         if ( 'plugin' === $type ) {
             if ( ! function_exists( 'get_plugin_data' ) ) {
@@ -93,6 +72,8 @@ class Helper {
 
             $data = self::format_theme_data( $theme, $base_file );
         }
+
+        $cache[ $cache_key ] = $data;
 
         return $data;
     }
@@ -230,7 +211,7 @@ class Helper {
     public static function product_background_installer( $slug = '', $download_url = '' ) {
         global $wp_filesystem;
 
-        $slug = isset( $_REQUEST['text_domain'] ) ? wp_unslash( sanitize_text_field( wp_unslash( $_REQUEST['text_domain'] ) ) ) : '';
+        $slug = isset( $_REQUEST['text_domain'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['text_domain'] ) ) : '';
         if ( ! array_key_exists( 'nonce', $_REQUEST )
             || ! empty( $_REQUEST ) && array_key_exists( 'nonce', $_REQUEST )
             && isset( $_REQUEST ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'slswc_client_install_' . $slug ) ) {
@@ -241,7 +222,7 @@ class Helper {
             );
         }
 
-        $download_link = isset( $_POST['package'] ) ? sanitize_text_field( wp_unslash( $_POST['package'] ) ) : '';
+        $download_link = isset( $_POST['package'] ) ? esc_url_raw( wp_unslash( $_POST['package'] ) ) : '';
         $name          = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
         $product_type  = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 
@@ -316,9 +297,6 @@ class Helper {
             }
 
             wp_send_json_error( array( 'message' => __( 'No action taken.', 'slswc-client' ) ) );
-
-            // Discard feedback.
-            ob_end_clean();
         }
 
         wp_send_json(
@@ -326,175 +304,6 @@ class Helper {
                 'message' => __( 'Failed to install product. Download link not provided or is invalid.', 'slswc-client' ),
             )
         );
-    }
-
-    /**
-     * Check if a url qualifies as localhost, staging or development environment.
-     *
-     * @param string $url The url to be checked.
-     * @param string $environment The user specified environment of the url.
-     * @return boolean
-     * @version 1.0.0
-     * @since   1.0.0
-     */
-    public static function is_dev( $url = '', $environment = '' ) {
-        $is_dev = false;
-
-        if ( 'staging' === $environment ) {
-            return apply_filters( 'slswc_client_is_dev', true, $url, $environment );
-        }
-
-        if ( 'live' === $environment ) {
-            return apply_filters( 'slswc_client_is_dev', false, $url, $environment );
-        }
-
-        // Trim the url.
-        $url = strtolower( trim( $url ) );
-
-        // Add the scheme so we can use parse_url.
-        if ( false === strpos( $url, 'http://' ) && false === strpos( $url, 'https://' ) ) {
-            $url = 'http://' . $url;
-        }
-
-        $url_parts = wp_parse_url( $url );
-        $host      = ! empty( $url_parts['host'] ) ? $url_parts['host'] : false;
-
-        if ( empty( $url ) || ! $host ) {
-            return apply_filters( 'slswc_client_is_dev', true );
-        }
-
-        $is_ip_local = self::is_ip_local( $host );
-
-        $check_tlds = apply_filters( 'slswc_client_validate_tlds', true );
-        $is_tld_dev = false;
-
-        if ( $check_tlds ) {
-            $is_tld_dev = self::is_tld_dev( $host );
-        }
-
-        $is_subdomain_dev = self::is_subdomain_dev( $host );
-
-        $is_dev = ( $is_ip_local || $is_tld_dev || $is_subdomain_dev ) ? true : false;
-
-        return apply_filters( 'slswc_client_is_dev', $is_dev, $url, $environment );
-    }
-
-    /**
-     * Check if a host's IP address is within the local IP range.
-     *
-     * @param string $host The host to be checked.
-     * @return boolean
-     * @version 1.0.0
-     * @since   1.0.0
-     */
-    public static function is_ip_local( $host ) {
-        if ( 'localhost' === $host ) {
-            return true;
-        }
-
-        if ( false !== ip2long( $host ) ) {
-            if ( ! filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
-                return true;
-            }
-        }
-
-        return apply_filters( 'slswc_client_is_ip_local', false, $host );
-    }
-
-    /**
-     * Check if a host's TLD is a development or local tld
-     *
-     * @param string $host The host to be checked.
-     * @return boolean
-     * @version 1.0.0
-     * @since   1.0.0
-     */
-    public static function is_tld_dev( $host ) {
-        $tlds_to_check = apply_filters(
-            'slswc_client_url_tlds',
-            array(
-                '.dev',
-                '.dev.cc',       // DesktopServer
-                '.local',
-                '.test',
-                '.staging',
-                '.example',      // RFC 2606 reserved
-                '.invalid',      // RFC 2606 reserved
-            )
-        );
-
-        foreach ( $tlds_to_check as $tld ) {
-            if ( substr( $host, -strlen( $tld ) ) === $tld ) {
-                return true;
-            }
-        }
-
-        return apply_filters( 'slswc_client_is_tld_dev', false, $host );
-    }
-
-    /**
-     * Check if a domain contains development subdomain.
-     *
-     * @param string $host The domain to be checked.
-     * @return boolean
-     * @version 1.0.0
-     * @since   1.0.0
-     */
-    public static function is_subdomain_dev( $host ) {
-        if ( substr_count( $host, '.' ) <= 1 ) {
-            return false;
-        }
-
-        $subdomains_to_check = apply_filters(
-            'slswc_client_url_subdomains',
-            array(
-                // Subdomain prefixes.
-                'local.',
-                'dev.',
-                'test.',
-                'stage.',
-                'staging.',
-                'staging*.',     // SiteGround stagingN pattern
-                'staging-*.',
-                '*.staging.',
-                '*.test.',
-
-                // Hosting provider domains.
-                '*.wpengine.com',            // WP Engine
-                '*.easywp.com',              // EasyWP
-                '*.myftpupload.com',         // GoDaddy
-                '*.cloudwaysapps.com',       // Cloudways
-                '*.wpsandbox.pro',           // WPSandbox
-                '*.ngrok.io',                // Tunneling
-                '*.ngrok-free.app',          // ngrok v3
-                '*.mystagingwebsite.com',    // Pressable
-                '*.tempurl.host',            // WPMU DEV
-                '*.wpmudev.host',            // WPMU DEV
-                '*.websitepro-staging.com',  // Vendasta
-                '*.websitepro.hosting',      // Vendasta
-                '*.instawp.xyz',             // InstaWP
-                '*.instawp.co',              // InstaWP
-                '*.pantheonsite.io',         // Pantheon
-                '*.kinsta.cloud',            // Kinsta
-                '*.flywheelsites.com',       // Flywheel
-                '*.flywheelstaging.com',     // Flywheel staging
-                '*.wpcomstaging.com',        // WordPress.com staging
-                '*.jurassic.ninja',          // Jurassic Ninja
-                '*.lndo.site',              // Lando
-                '*.ddev.site',              // DDEV
-            )
-        );
-
-        foreach ( $subdomains_to_check as $subdomain ) {
-            $pattern = preg_quote( $subdomain, '/' );
-            $pattern = str_replace( '\\*', '(.*)', $pattern );
-
-            if ( preg_match( '/^' . $pattern . '/', $host ) ) {
-                return true;
-            }
-        }
-
-        return apply_filters( 'slswc_client_is_subdomain_dev', false, $host );
     }
 
     /**
@@ -515,6 +324,8 @@ class Helper {
                 'active'          => __( 'Active', 'slswc-client' ),
                 'expiring'        => __( 'Expiring', 'slswc-client' ),
                 'expired'         => __( 'Expired', 'slswc-client' ),
+                'disabled'        => __( 'Disabled', 'slswc-client' ),
+                'failed'          => __( 'Failed', 'slswc-client' ),
             )
         );
     }
@@ -531,50 +342,51 @@ class Helper {
         if ( ! apply_filters( 'slswc_client_logging', $logging_enabled ) ) {
             return;
         }
-		//phpcs:disable
-		if ( is_array( $data ) || is_object( $data ) ) {
-			error_log( __CLASS__ . ' : ' . print_r( $data, true ) );
-		} else {
-			error_log( __CLASS__ . ' : ' . $data );
-		}
-	}
+        //phpcs:disable
+        if ( is_array( $data ) || is_object( $data ) ) {
+            error_log( __CLASS__ . ' : ' . print_r( $data, true ) );
+        } else {
+            error_log( __CLASS__ . ' : ' . $data );
+        }
+        //phpcs:enable
+    }
 
-	/**
-	 * Add extra theme headers.
-	 *
-	 * @param   array $headers The extra theme/plugin headers.
-	 * @return  array
-	 * @since   1.0.0
-	 * @version 1.0.0
-	 */
-	public static function extra_headers( $headers ) {
+    /**
+     * Add extra theme headers.
+     *
+     * @param   array $headers The extra theme/plugin headers.
+     * @return  array
+     * @since   1.0.0
+     * @version 1.0.0
+     */
+    public static function extra_headers( $headers ) {
 
-		if ( ! in_array( 'SLSWC', $headers, true ) ) {
-			$headers[] = 'SLSWC';
-		}
+        if ( ! in_array( 'SLSWC', $headers, true ) ) {
+            $headers[] = 'SLSWC';
+        }
 
-		if ( ! in_array( 'SLSWC Updated', $headers, true ) ) {
-			$headers[] = 'SLSWC Updated';
-		}
+        if ( ! in_array( 'SLSWC Updated', $headers, true ) ) {
+            $headers[] = 'SLSWC Updated';
+        }
 
-		if ( ! in_array( 'Author', $headers, true ) ) {
-			$headers[] = 'Author';
-		}
+        if ( ! in_array( 'Author', $headers, true ) ) {
+            $headers[] = 'Author';
+        }
 
-		if ( ! in_array( 'Requires at least', $headers, true ) ) {
-			$headers[] = 'Requires at least';
-		}
+        if ( ! in_array( 'Requires at least', $headers, true ) ) {
+            $headers[] = 'Requires at least';
+        }
 
-		if ( ! in_array( 'SLSWC Compatible To', $headers, true ) ) {
-			$headers[] = 'SLSWC Compatible To';
-		}
+        if ( ! in_array( 'SLSWC Compatible To', $headers, true ) ) {
+            $headers[] = 'SLSWC Compatible To';
+        }
 
-		if ( ! in_array( 'SLSWC Documentation URL', $headers, true ) ) {
-			$headers[] = 'SLSWC Documentation URL';
-		}
+        if ( ! in_array( 'SLSWC Documentation URL', $headers, true ) ) {
+            $headers[] = 'SLSWC Documentation URL';
+        }
 
-		return $headers;
-	}
+        return $headers;
+    }
 
     /**
      * Convert a date string to time
@@ -585,16 +397,18 @@ class Helper {
      */
     public static function date_to_time( $date_string ) {
 
-        if ( 0 == $date_string ) {
+        if ( empty( $date_string ) ) {
             return 0;
         }
 
         try {
-            $date_time = new WC_DateTime( $date_string, new DateTimeZone( 'UTC' ) );
+            $date_time = class_exists( 'WC_DateTime' )
+                ? new WC_DateTime( $date_string, new DateTimeZone( 'UTC' ) )
+                : new \DateTime( $date_string, new DateTimeZone( 'UTC' ) );
 
             return intval( $date_time->getTimestamp() );
         } catch ( Exception $e ) {
             return 0;
-        }        
+        }
     }
 }

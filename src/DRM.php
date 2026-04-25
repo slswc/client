@@ -329,7 +329,16 @@ class DRM {
      *
      * Runs as a wp-cron job — there may be no current user in this context.
      *
+     * On any non-success response (network failure, WP_Error, HTTP error, or
+     * an unrecognised status string) the current license state is preserved
+     * and the grace clock is not advanced. ApiClient::request() returns an
+     * object shaped like { status: <http_code>, response: <message> } on
+     * HTTP failures, so the status field cannot be persisted blindly — it
+     * must be a known license status string.
+     *
      * @since 1.0.0
+     *
+     * @return void
      */
     public function run_license_check() {
         $license_details = $this->updater->get_license_details();
@@ -353,7 +362,15 @@ class DRM {
             $status = $response['status'];
         }
 
-        if ( empty( $status ) ) {
+        // Reject anything that isn't a recognised license status string —
+        // numeric HTTP codes, WP_Error slugs, and other junk leak in here
+        // when the license server returns a non-200 response.
+        if ( ! is_string( $status ) || '' === $status ) {
+            return;
+        }
+
+        $valid_statuses = array_keys( Helper::license_status_types() );
+        if ( ! in_array( $status, $valid_statuses, true ) ) {
             return;
         }
 

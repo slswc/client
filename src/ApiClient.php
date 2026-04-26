@@ -184,13 +184,21 @@ class ApiClient {
     /**
      * Send a request to the server.
      *
-     * @param   string $action activate|deactivate|check_update.
-     * @param   array  $request_info The data to be sent to the server.
-
-     * @since   1.0.0
-     * @version 1.0.0
+     * On failure, the returned stub's `response` field carries the most
+     * specific human-readable message available — typically the validation
+     * error returned by the SLSWC server (e.g. "License Key not found"),
+     * not the generic HTTP status text ("Bad Request"). Falling back to
+     * raw HTTP status text wiped out the helpful error every consumer
+     * needed to surface in its UI.
      *
-     * @return object The response from the server.
+     * @since   1.0.0 Surface the validate_response() / response-body message
+     *                in the failure stub so callers can display a useful
+     *                error rather than the bare HTTP status text.
+     *
+     * @param   string $action       activate|deactivate|check_update.
+     * @param   array  $request_info The data to be sent to the server.
+     *
+     * @return  object The response from the server.
      */
     public function request( $action = 'check_update', $request_info = array() ) {
         $domain = $this->license_server_url;
@@ -235,11 +243,49 @@ class ApiClient {
 		Helper::log( 'The response body: ' . print_r( wp_remote_retrieve_body( $response ), true ) );
 		// phpcs:enable
 
-        // Return null to halt the execution.
         return (object) array(
             'status'   => is_wp_error( $response ) ? $response->get_error_code() : $response['response']['code'],
-            'response' => is_wp_error( $response ) ? $response->get_error_message() : $response['response']['message'],
+            'response' => $this->extract_error_message( $response, $result ),
         );
+    }
+
+    /**
+     * Extract the most informative error message from a failed remote request.
+     *
+     * Prefers, in order:
+     *
+     * 1. The WP_Error message produced by validate_response() (it already
+     *    knows how to unwrap server-side validation `data.params` payloads
+     *    and 500-level "license server is broken" responses).
+     * 2. The transport-level WP_Error message (DNS, timeout, SSL).
+     * 3. The decoded JSON body's `message` field (REST `WP_Error::message`).
+     * 4. The raw HTTP status text as a last resort.
+     *
+     * @since   1.0.0
+     *
+     * @param   array|\WP_Error $response Original wp_remote_* response.
+     * @param   true|\WP_Error  $result   Outcome of {@see self::validate_response()}.
+     *
+     * @return  string
+     */
+    private function extract_error_message( $response, $result ) {
+        if ( is_wp_error( $result ) ) {
+            $message = (string) $result->get_error_message();
+            if ( '' !== $message ) {
+                return $message;
+            }
+        }
+
+        if ( is_wp_error( $response ) ) {
+            return (string) $response->get_error_message();
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ) );
+        if ( is_object( $body ) && ! empty( $body->message ) ) {
+            return (string) $body->message;
+        }
+
+        return isset( $response['response']['message'] ) ? (string) $response['response']['message'] : '';
     }
 
     /**

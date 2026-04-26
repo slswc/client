@@ -135,18 +135,23 @@ class LicenseDetails {
     /**
      * Set the license details
      *
+     * Tolerates partial input arrays — get_default_license_details() returns
+     * `current_version` (not `version`), and callers occasionally pass a subset
+     * of keys, so each lookup falls back to an empty string instead of raising
+     * "undefined array key" warnings under PHP 8.
+     *
+     * @since   1.0.0 Tolerate partial input arrays.
+     *
      * @param array $license_details The license details.
      *
      * @return void
-     * @version 1.0.0
-     * @since   1.0.0
      */
     public function set_license_details( $license_details ) {
-        $this->set_domain( $license_details['domain'] );
-        $this->set_license_status( $license_details['license_status'] );
-        $this->set_license_key( $license_details['license_key'] );
-        $this->set_license_expires( $license_details['license_expires'] );
-        $this->set_current_version( $license_details['version'] );
+        $this->set_domain( $license_details['domain'] ?? '' );
+        $this->set_license_status( $license_details['license_status'] ?? '' );
+        $this->set_license_key( $license_details['license_key'] ?? '' );
+        $this->set_license_expires( $license_details['license_expires'] ?? '' );
+        $this->set_current_version( $license_details['version'] ?? '' );
     }
 
     /**

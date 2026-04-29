@@ -110,10 +110,16 @@ class LicenseDetails {
     /**
      * Get default license options.
      *
+     * The `grace_soft_days` and `grace_lock_days` keys default to an empty
+     * string so DRM can distinguish "the server has never told us a value"
+     * from "the server told us 0". Until populated via
+     * {@see merge_grace_from_response()}, DRM falls back to its own defaults.
+     *
+     * @since 1.0.0
+     *
      * @param array $args Options to override the defaults.
-     * @return  array
-     * @since   1.0.0
-     * @version 1.0.0
+     *
+     * @return array
      */
     public function get_default_license_details( $args = array() ) {
         $default_options = array(
@@ -123,6 +129,8 @@ class LicenseDetails {
             'license_key'     => '',
             'license_expires' => '',
             'current_version' => '',
+            'grace_soft_days' => '',
+            'grace_lock_days' => '',
         );
 
         if ( ! empty( $args ) ) {
@@ -152,6 +160,14 @@ class LicenseDetails {
         $this->set_license_key( $license_details['license_key'] ?? '' );
         $this->set_license_expires( $license_details['license_expires'] ?? '' );
         $this->set_current_version( $license_details['version'] ?? '' );
+
+        if ( isset( $license_details['grace_soft_days'] ) ) {
+            $this->set_grace_soft_days( $license_details['grace_soft_days'] );
+        }
+
+        if ( isset( $license_details['grace_lock_days'] ) ) {
+            $this->set_grace_lock_days( $license_details['grace_lock_days'] );
+        }
     }
 
     /**
@@ -298,6 +314,100 @@ class LicenseDetails {
     }
 
     /**
+     * Set the server-supplied grace_soft_days value.
+     *
+     * Stored as an integer — empty / non-numeric values are coerced to an
+     * empty string so {@see DRM::__construct()} treats them as "not set".
+     *
+     * @since 1.0.0
+     *
+     * @param mixed $days Number of days, or empty/non-numeric to clear.
+     *
+     * @return void
+     */
+    public function set_grace_soft_days( $days ) {
+        $this->license_details['grace_soft_days'] = is_numeric( $days ) ? (int) $days : '';
+    }
+
+    /**
+     * Set the server-supplied grace_lock_days value.
+     *
+     * @since 1.0.0
+     *
+     * @param mixed $days Number of days, or empty/non-numeric to clear.
+     *
+     * @return void
+     */
+    public function set_grace_lock_days( $days ) {
+        $this->license_details['grace_lock_days'] = is_numeric( $days ) ? (int) $days : '';
+    }
+
+    /**
+     * Get the server-supplied grace_soft_days value.
+     *
+     * @since 1.0.0
+     *
+     * @return int|string Integer when the server has supplied a value,
+     *                    empty string when no value has been received yet.
+     */
+    public function get_grace_soft_days() {
+        return $this->license_details['grace_soft_days'] ?? '';
+    }
+
+    /**
+     * Get the server-supplied grace_lock_days value.
+     *
+     * @since 1.0.0
+     *
+     * @return int|string Integer when the server has supplied a value,
+     *                    empty string when no value has been received yet.
+     */
+    public function get_grace_lock_days() {
+        return $this->license_details['grace_lock_days'] ?? '';
+    }
+
+    /**
+     * Persist DRM grace values from a license-server response payload.
+     *
+     * Tolerates both object and array shapes (the SDK consumes both: cron
+     * checks pass decoded objects, the form-submission flow occasionally
+     * receives arrays). Unknown / non-numeric values are ignored — the
+     * existing persisted value is preserved.
+     *
+     * Callers are responsible for invoking save() afterwards.
+     *
+     * @since 1.0.0
+     *
+     * @param mixed $response Decoded response from the license server.
+     *
+     * @return void
+     */
+    public function merge_grace_from_response( $response ) {
+        if ( empty( $response ) ) {
+            return;
+        }
+
+        foreach ( array( 'grace_soft_days', 'grace_lock_days' ) as $key ) {
+            $value = null;
+            if ( is_object( $response ) && isset( $response->$key ) ) {
+                $value = $response->$key;
+            } elseif ( is_array( $response ) && isset( $response[ $key ] ) ) {
+                $value = $response[ $key ];
+            }
+
+            if ( ! is_numeric( $value ) ) {
+                continue;
+            }
+
+            if ( 'grace_soft_days' === $key ) {
+                $this->set_grace_soft_days( $value );
+            } else {
+                $this->set_grace_lock_days( $value );
+            }
+        }
+    }
+
+    /**
      * Set the option name.
      *
      * @param string $option_name The name of the option.
@@ -431,6 +541,7 @@ class LicenseDetails {
         $this->set_license_status( $response->domain->status );
         $this->set_domain( is_object( $response->domain ) ? $response->domain->domain : $response->domain );
         $this->set_license_expires( $response->expires );
+        $this->merge_grace_from_response( $response );
 
         $domain_status = $response->domain->status;
 

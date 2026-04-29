@@ -67,20 +67,39 @@ class DRM {
     /**
      * Constructor.
      *
+     * Config precedence (lowest → highest):
+     *   1. self::$defaults
+     *   2. Server-persisted values stored in LicenseDetails by run_license_check().
+     *   3. Consumer-supplied $config (only when the consumer explicitly set the key).
+     *   4. The 'slswc_drm_config_{identifier}' filter.
+     *
      * @since 1.0.0
-     * @param array                 $config  DRM configuration.
+     *
+     * @param array                  $config  DRM configuration.
      * @param GenericSoftwareUpdater $updater Parent updater instance.
      */
     public function __construct( array $config, GenericSoftwareUpdater $updater ) {
         $this->updater = $updater;
-        $this->config  = wp_parse_args( $config, self::$defaults );
+
+        $resolved = self::$defaults;
+
+        // Layer 2: server-persisted grace values (overrides defaults only).
+        $persisted = $updater->license->get_license_details();
+        foreach ( array( 'grace_soft_days', 'grace_lock_days' ) as $key ) {
+            if ( isset( $persisted[ $key ] ) && is_numeric( $persisted[ $key ] ) ) {
+                $resolved[ $key ] = (int) $persisted[ $key ];
+            }
+        }
+
+        // Layer 3: consumer-supplied config wins over server-persisted values.
+        $this->config = wp_parse_args( $config, $resolved );
 
         // Auto-set identifier from updater if not provided.
         if ( empty( $this->config['identifier'] ) ) {
             $this->config['identifier'] = $updater->get_text_domain();
         }
 
-        // Allow filtering the config.
+        // Layer 4: filter has the final say.
         $this->config = apply_filters( 'slswc_drm_config_' . $this->config['identifier'], $this->config );
     }
 
@@ -163,8 +182,14 @@ class DRM {
      *
      * Cached for the lifetime of the request.
      *
+     * State boundaries:
+     * - 0 to grace_soft_days: 'grace_silent' (silent grace period — no admin notice).
+     * - grace_soft_days to grace_lock_days: 'grace_soft' (friendly admin notice).
+     * - grace_lock_days+: 'locked' (full-page interstitial on protected admin pages).
+     *
      * @since  1.0.0
-     * @return string 'ok' | 'grace_soft' | 'grace_hard' | 'locked'
+     *
+     * @return string 'ok' | 'grace_silent' | 'grace_soft' | 'locked'
      */
     public function get_drm_state() {
         if ( null !== $this->drm_state ) {
@@ -181,9 +206,9 @@ class DRM {
         if ( $days >= $this->config['grace_lock_days'] ) {
             $this->drm_state = 'locked';
         } elseif ( $days >= $this->config['grace_soft_days'] ) {
-            $this->drm_state = 'grace_hard';
-        } else {
             $this->drm_state = 'grace_soft';
+        } else {
+            $this->drm_state = 'grace_silent';
         }
 
         $this->drm_state = apply_filters( 'slswc_drm_state_' . $this->config['identifier'], $this->drm_state, $this );
@@ -199,11 +224,12 @@ class DRM {
      * Output the appropriate admin notice for the current DRM state.
      *
      * Notice logic:
-     * - 'active' status  → no notice (license is valid and working)
-     * - 'expiring'       → pre-expiry warning (license works but will expire soon)
-     * - 'expired'        → expired notice (license no longer valid)
-     * - 'disabled'       → disabled notice (license was revoked)
-     * - anything else    → no-license notice (grace period countdown)
+     * - 'active' status   → no notice (license is valid and working)
+     * - 'expiring'        → pre-expiry warning (license works but will expire soon)
+     * - 'expired'         → expired notice (license no longer valid)
+     * - 'disabled'        → disabled notice (license was revoked)
+     * - 'grace_silent'    → no notice (silent grace period before any DRM warning)
+     * - anything else     → no-license notice (grace period countdown)
      *
      * @since 1.0.0
      */
@@ -237,8 +263,10 @@ class DRM {
             if ( $this->should_show_notice( 'show_disabled_notice' ) ) {
                 $notice_html = $this->render_notice_disabled( $nonce );
             }
-        } elseif ( 'ok' !== $state && $this->should_show_notice( 'show_no_license_notice' ) ) {
-            // No license / inactive / invalid — show grace period notice.
+        } elseif ( ! in_array( $state, array( 'ok', 'grace_silent' ), true )
+            && $this->should_show_notice( 'show_no_license_notice' ) ) {
+            // No license / inactive / invalid — show grace period notice
+            // once the silent grace period has elapsed.
             $notice_html = $this->render_notice_no_license( $state, $nonce );
         }
 
@@ -382,6 +410,7 @@ class DRM {
         if ( $expires ) {
             $this->updater->license->set_license_expires( $expires );
         }
+        $this->updater->license->merge_grace_from_response( $response );
         $this->updater->license->save();
 
         $this->update_license_activated( 'active' === $status );

@@ -50,6 +50,10 @@ class Helper {
     public static function get_file_information( $base_file, $type = 'plugin' ) {
         static $cache = array();
 
+        if ( empty( $base_file ) || ! is_string( $base_file ) ) {
+            return array();
+        }
+
         $cache_key = $type . '::' . $base_file;
 
         if ( isset( $cache[ $cache_key ] ) ) {
@@ -61,9 +65,18 @@ class Helper {
             if ( ! function_exists( 'get_plugin_data' ) ) {
                 require_once ABSPATH . 'wp-admin/includes/plugin.php';
             }
-            $plugin = get_plugin_data( $base_file, false );
 
-            $data = self::format_plugin_data( $plugin, $base_file );
+            $absolute = file_exists( $base_file )
+                ? $base_file
+                : WP_PLUGIN_DIR . '/' . ltrim( $base_file, '/' );
+
+            if ( ! file_exists( $absolute ) ) {
+                $cache[ $cache_key ] = array();
+                return array();
+            }
+
+            $plugin = get_plugin_data( $absolute, false );
+            $data   = self::format_plugin_data( $plugin, $base_file );
         } elseif ( 'theme' === $type ) {
             if ( ! function_exists( 'wp_get_theme' ) ) {
                 require_once ABSPATH . 'wp-includes/theme.php';
@@ -88,17 +101,19 @@ class Helper {
      * @since   1.0.0
      */
     public static function format_plugin_data( $data, $file = '' ) {
+        $data = is_array( $data ) ? $data : array();
+
         $formatted_data = array(
-            'name'              => $data['Name'],
-            'title'             => $data['Title'],
-            'description'       => $data['Description'],
-            'author'            => $data['Author'],
-            'author_uri'        => $data['AuthorURI'],
-            'version'           => $data['Version'],
-            'plugin_url'        => $data['PluginURI'],
-            'text_domain'       => $data['TextDomain'],
-            'domain_path'       => $data['DomainPath'],
-            'network'           => $data['Network'],
+            'name'              => isset( $data['Name'] ) ? $data['Name'] : '',
+            'title'             => isset( $data['Title'] ) ? $data['Title'] : '',
+            'description'       => isset( $data['Description'] ) ? $data['Description'] : '',
+            'author'            => isset( $data['Author'] ) ? $data['Author'] : '',
+            'author_uri'        => isset( $data['AuthorURI'] ) ? $data['AuthorURI'] : '',
+            'version'           => isset( $data['Version'] ) ? $data['Version'] : '',
+            'plugin_url'        => isset( $data['PluginURI'] ) ? $data['PluginURI'] : '',
+            'text_domain'       => isset( $data['TextDomain'] ) ? $data['TextDomain'] : '',
+            'domain_path'       => isset( $data['DomainPath'] ) ? $data['DomainPath'] : '',
+            'network'           => isset( $data['Network'] ) ? $data['Network'] : '',
             'requires_wp'       => ! empty( $data['RequiresWP'] ) ? $data['RequiresWP'] : '',
 
             // SLSWC Headers.
@@ -109,8 +124,14 @@ class Helper {
             'type'              => 'plugin',
         );
 
-        if ( '' !== $file ) {
+        if ( ! empty( $file ) ) {
             $formatted_data['file'] = WP_CONTENT_DIR . "/plugins/{$file}";
+
+            // Slug: dir name for "slug/slug.php"; filename for single-file plugins.
+            $dir                    = dirname( $file );
+            $formatted_data['slug'] = ( '.' === $dir || '' === $dir )
+                ? basename( $file, '.php' )
+                : $dir;
         }
 
         return apply_filters( 'slswc_client_formatted_plugin_data', $formatted_data, $data, $file );
@@ -149,8 +170,14 @@ class Helper {
      * @since   1.0.0
      */
     public static function format_theme_data( $theme, $theme_file ) {
+        $stylesheet = is_object( $theme ) && method_exists( $theme, 'get_stylesheet' )
+            ? $theme->get_stylesheet()
+            : '';
+        $slug = '' !== $stylesheet ? $stylesheet : basename( (string) $theme_file );
+
         $formatted_data = array(
             'file'              => WP_CONTENT_DIR . "/themes/{$theme_file}",
+            'slug'              => $slug,
             'name'              => $theme->get( 'Name' ),
             'theme_url'         => $theme->get( 'ThemeURI' ),
             'description'       => $theme->get( 'Description' ),

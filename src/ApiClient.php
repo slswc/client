@@ -23,13 +23,19 @@ use WP_Error;
 class ApiClient {
 
     /**
-     * Instance of this class.
+     * Per-consumer instance registry keyed by `text_domain`.
      *
-     * @var ApiClient
-     * @version 1.0.0
-     * @since   1.0.0
+     * Each SDK consumer gets its own ApiClient so request signing,
+     * `text_domain` headers, and per-product log lines stay distinct
+     * when multiple plugins or themes run on the same site. A shared
+     * singleton would silently route the second consumer's API calls
+     * through the FIRST consumer's text_domain, contaminating license
+     * checks across products.
+     *
+     * @var array<string, ApiClient>
+     * @since 1.0.0
      */
-    public static $instance = null;
+    private static $instances = array();
 
     /**
      * The plugin updater client
@@ -59,20 +65,57 @@ class ApiClient {
     public $text_domain;
 
     /**
-     * Single instance of the plugin.
+     * Get the ApiClient instance for a specific consumer.
+     *
+     * Keyed by `$text_domain` so each consuming plugin or theme gets
+     * its own ApiClient — distinct API request signing, distinct
+     * `text_domain` header on outbound calls, distinct log lines.
+     * Sharing a singleton would route the second consumer's API calls
+     * through the first consumer's text_domain, contaminating license
+     * checks across products.
+     *
+     * @since   1.0.0
+     * @version 1.0.0
      *
      * @param string $license_server_url The license server URL.
      * @param string $text_domain        The product text domain.
+     *
      * @return ApiClient
-     * @version 1.0.0
-     * @since   1.0.0
      */
     public static function get_instance( $license_server_url, $text_domain ) {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self( $license_server_url, $text_domain );
+        $key = (string) $text_domain;
+
+        if ( '' === $key ) {
+            // Empty text_domain would collapse every consumer onto the same
+            // registry slot, route their API calls under no identifier, and
+            // (since LicenseDetails sanitizes text_domain into its option
+            // key) write to a collision-prone `_license_details` row.
+            throw new \InvalidArgumentException( '$text_domain is required and must be a non-empty string.' );
         }
 
-        return self::$instance;
+        if ( isset( self::$instances[ $key ] ) ) {
+            // Two consumers that legitimately share a text_domain (e.g. a
+            // plugin and a tightly-coupled add-on that intentionally pool
+            // their license) must agree on the server URL. Surface a warning
+            // when they don't so cross-server contamination doesn't ship
+            // silently.
+            $cached_url = self::$instances[ $key ]->license_server_url;
+            if ( $cached_url !== $license_server_url ) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log(
+                    sprintf(
+                        '[SLSWC Client] ApiClient::get_instance called for text_domain=%s with license_server_url=%s but a prior call cached %s — using the cached instance.',
+                        $key,
+                        $license_server_url,
+                        $cached_url
+                    )
+                );
+            }
+            return self::$instances[ $key ];
+        }
+
+        self::$instances[ $key ] = new self( $license_server_url, $text_domain );
+        return self::$instances[ $key ];
     }
 
     /**

@@ -17,14 +17,6 @@ namespace SLSWC\Client;
  * @since   1.0.0
  */
 class GenericSoftwareUpdater {
-    /**
-     * The instance of this class.
-     *
-     * @var plugin
-     * @version 1.0.0
-     * @since   1.0.0
-     */
-    public static $instance = null;
 
     /**
      * The instance of the ApiClient class.

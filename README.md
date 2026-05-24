@@ -76,6 +76,18 @@ $client = Plugin::get_instance(
 );
 ```
 
+## Multi-consumer safety
+
+Multiple plugins and themes on the same WordPress install can embed this SDK independently. Each consumer receives its own isolated `Plugin` / `Theme` / `ApiClient` instance, keyed internally by:
+
+- `Plugin::get_instance( $url, $base_file, $args )` — keyed by `$base_file` (the consumer's main plugin file path).
+- `Theme::get_instance( $url, $base_file, $args )` — keyed by `$base_file` (the consumer's theme directory path).
+- `ApiClient::get_instance( $url, $text_domain )` — keyed by `$text_domain`.
+
+`text_domain`, DRM option keys (`<text_domain>_drm_*`), `LicenseDetails` option key (`<text_domain>_license_details`), DRM admin notice hooks, and scheduled license-check cron events therefore stay isolated across consumers. There is no shared mutable state between two consumers on the same site.
+
+Consumers are expected to pass a stable `$base_file` (a plugin's main `__FILE__` is ideal) and a unique `text_domain` per product. Reusing the same `text_domain` across two consumers will share a registry slot and is unsupported.
+
 ## Documentation
 
 Full integration guides: [licenseserver.io/documentation](https://licenseserver.io/documentation)

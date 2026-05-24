@@ -19,6 +19,21 @@ namespace SLSWC\Client;
 class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface {
 
     /**
+     * Per-consumer instance registry keyed by base file path.
+     *
+     * Each consuming plugin gets its own Plugin instance keyed on the
+     * path of its main plugin file. A shared singleton would collide
+     * across consumers — the first caller would pin the slot, and every
+     * subsequent caller would receive the wrong instance: wrong
+     * `text_domain`, wrong DRM option keys, wrong `license_details` —
+     * silently sharing one upstream identity.
+     *
+     * @var array<string, Plugin>
+     * @since 1.0.0
+     */
+    private static $instances = array();
+
+    /**
      * The plugin file
      *
      * @var string
@@ -53,20 +68,58 @@ class Plugin extends GenericSoftwareUpdater implements SoftwareUpdaterInterface 
     public $drm = null;
 
     /**
-     * Get an instance of this class..
+     * Get the Plugin instance for a specific consumer.
+     *
+     * Keyed by `$base_file` so two plugins on the same WordPress install
+     * each receive their OWN updater — distinct `text_domain`, distinct
+     * DRM option keys, distinct license details — instead of silently
+     * sharing the first-registered consumer's identity.
      *
      * @since   1.0.0
      * @version 1.0.0
-     * @param   string $license_server_url - The base url to your WooCommerce shop.
-     * @param   string $base_file          - path to the plugin file or directory, relative to the plugins directory.
-     * @param   array  $args               - array of additional arguments to override default ones.
+     *
+     * @param   string $license_server_url The base url to your WooCommerce shop.
+     * @param   string $base_file          Path to the plugin file or directory, relative to the plugins directory.
+     * @param   array  $args               Array of additional arguments to override default ones.
+     *
+     * @return Plugin
      */
     public static function get_instance( $license_server_url, $base_file, $args ) {
-        if ( is_null( self::$instance ) ) {
-            self::$instance = new self( $license_server_url, $base_file, $args );
+        $key = (string) $base_file;
+
+        if ( '' === $key ) {
+            // Empty $base_file would collapse every consumer onto the same
+            // registry slot — first-caller-wins, silently. Surface the
+            // misuse loudly instead of recreating the old singleton bug.
+            throw new \InvalidArgumentException( '$base_file is required and must be a non-empty string.' );
         }
 
-        return self::$instance;
+        if ( isset( self::$instances[ $key ] ) ) {
+            // A second call with the same $base_file but a different
+            // $license_server_url silently won-with-first under the old
+            // singleton AND under the registry pattern. Warn so consumers
+            // notice when their late-binding args (e.g. license_key passed
+            // on a later call after initial empty boot) are being ignored.
+            // Args themselves are NOT compared because consumers legitimately
+            // re-call with the same args at different bootstrap stages —
+            // only the server URL is a strict integrity check.
+            $cached_url = self::$instances[ $key ]->license_server_url;
+            if ( $cached_url !== $license_server_url ) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log(
+                    sprintf(
+                        '[SLSWC Client] Plugin::get_instance called for %s with license_server_url=%s but a prior call cached %s — using the cached instance. Use distinct $base_file per server, or restart PHP to rebind.',
+                        $key,
+                        $license_server_url,
+                        $cached_url
+                    )
+                );
+            }
+            return self::$instances[ $key ];
+        }
+
+        self::$instances[ $key ] = new self( $license_server_url, $base_file, $args );
+        return self::$instances[ $key ];
     }
 
     /**

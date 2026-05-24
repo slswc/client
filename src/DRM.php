@@ -130,8 +130,19 @@ class DRM {
         foreach ( $this->config['submenu_slugs'] as $sub_slug ) {
             add_action( 'load-' . $prefix . '_page_' . $sub_slug, array( $this, 'intercept_admin_page' ) );
         }
-        // Also intercept the top-level parent page itself.
-        add_action( 'load-toplevel_page_' . $parent, array( $this, 'intercept_admin_page' ) );
+
+        // Top-level page intercept is opt-in via a non-empty `submenu_slugs`.
+        // Without this gate, two SDK consumers that share a `parent_menu_slug`
+        // both register `load-toplevel_page_{parent}` and race on every page
+        // load — whichever is `locked` renders ITS branded interstitial on
+        // the OTHER consumer's page. Consumers that intentionally suppress
+        // the SDK interstitial (e.g. they render their own in-place teaser)
+        // pass an empty submenu_slugs array; we honour that here by also
+        // skipping the top-level intercept, which keeps the parent page free
+        // for the page-owner consumer to handle.
+        if ( ! empty( $this->config['submenu_slugs'] ) ) {
+            add_action( 'load-toplevel_page_' . $parent, array( $this, 'intercept_admin_page' ) );
+        }
 
         // AJAX handlers.
         add_action( 'wp_ajax_slswc_drm_dismiss_notice_' . $slug, array( $this, 'ajax_dismiss_notice' ) );
